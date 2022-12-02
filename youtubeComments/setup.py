@@ -10,7 +10,6 @@ import getpass
 from pathlib import Path
 import pandas as pd
 import json
-import configparser
 from googleapiclient.discovery import build
 
 # Define location of repository

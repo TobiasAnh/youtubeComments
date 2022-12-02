@@ -1,8 +1,9 @@
 import pandas as pd
-from pandas_profiling import ProfileReport
+import numpy as np
+# from pandas_profiling import ProfileReport
 from datetime import datetime
 import plotly.express as px
-from pandas.api.types import CategoricalDtype
+#from pandas.api.types import CategoricalDtype
 from youtubeComments.setup import storage_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
 from youtubeComments.setup import importDFdtypes
 
@@ -23,8 +24,8 @@ comments = comments.astype(importDFdtypes("comments"))
 
 # Only videos published before report_deadline are included in report.
 # (to avoid including videos with insufficient time to accumulate comments
-report_deadline = datetime(2022, 7, 1) 
-report_deadline_short = report_deadline.strftime("%b %y")
+report_deadline = "2022-07-01 00:00:00+00:00"
+report_deadline_short = "Q3"
 
 # =============================================================================
 # Video Filter: 
@@ -175,12 +176,6 @@ channels_quarter = pd.DataFrame()
 
 for quarter in quarters:
 
-    #TODO
-    #Quarterly metrics can here be separated either with respect to comment date or video date!!
-    #one groupby as used before (see below) and another one below in a similar manner
-    #Put features in either of these groupby (depending on where the metric fits best) 
-    
-    # Here is the aggregation with respect to video publishing ... 
     video_derived_metrics = (
          videos_cutoff
         .query("quarter == @quarter")

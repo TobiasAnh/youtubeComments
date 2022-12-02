@@ -208,10 +208,11 @@ videos["comments_per_1kViews"] = round(videos["comments_per_1kViews"], 1)
 videos["responsivity"] = round(videos["responsivity"] * 100, 1)
 videos["duration"] = pd.to_timedelta(videos["duration"]).dt.total_seconds()
 
+videos["publishedAt"]
+
 convert_dict = {"mod_activity" : float,
                 "toplevel_sentiment_mean" : float,
-                "duration" : int,
-                "publishedAt": 'to_datetime'}
+                "duration" : int}
 videos = videos.astype(convert_dict)
 
 # =============================================================================

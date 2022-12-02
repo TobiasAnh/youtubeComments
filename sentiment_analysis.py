@@ -35,22 +35,24 @@ def sentiment_analysis(channel_path):
     n_comments, x = len(comments_for_sentiment), 1 # loop reporting
     sentiment_estimate = [] # sentiments go here
    
-    print(f'Analyzing {n_comments} comments fetchen in {channel_title} ...')
+    print(f'Analyzing {n_comments} comments fetched in {channel_title} ...')
     start = time.time()
     for comment in comments_for_sentiment["comment_string"]:
-      
+        
         _ = len(sentiment_estimate)
         sentiment_estimate.append(sentiment.predict_sentiment([str(comment)]))
       
-        # loop reporting (in per mil [pm])
-        if (_ / n_comments) > (x*0.001):
-         
-            status = round((x*0.001)*1000)
-            end = time.time()
-            time_passed = (end - start) / 60
-            print(f'{channel_title} | {status} pm done | performance per run: {round(status/time_passed, 1)}')
+        # loop reporting (in per mil steps)
+        if (_ / n_comments) > 0.001:
+        
+            time_per_pm = time.time()
+            time_passed = time_per_pm - start
+            print(f'{channel_title} | {round(x/1000, 3)} done | performance per run: {round(x*0.001/time_passed, 1)}')
+            
             x += 1
-  
+            start = time.time()
+    
+        
     # Augment sentiment to original data frame and store as csv
     comments_for_sentiment["sentiment"] = sentiment_estimate
     comments_for_sentiment.to_csv(channel_path.joinpath("all_comments_withSentiment.csv"), 
@@ -62,8 +64,6 @@ def sentiment_analysis(channel_path):
         os.remove(file)
         print("original csv deleted.")
 
-import ray
-ray.init(runtime_env={'env_vars': {'__MODIN_AUTOIMPORT_PANDAS__': '1'}})
 sentiment_analysis(channel_path)
 
 
