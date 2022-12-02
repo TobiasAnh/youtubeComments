@@ -1,0 +1,5 @@
+venv/
+__pycache__/
+youtubeComments/__pychache__/
+API_KEY.json
+
