@@ -1,7 +1,7 @@
 import json
 import numpy as np
 import pandas as pd
-from youtubeComments.setup import storage_path
+from youtubeComments.setup import storage_path, project_path
 from youtubeComments.setup import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
 
 # =============================================================================
@@ -12,7 +12,7 @@ channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 print(f'found {len(channel_paths)} folders / channels.')
 
 # first channel paths are excluded (some channels not yet relevant)
-comments, videos = concatCommentsAndVideos(channel_paths[3:])
+comments, videos = concatCommentsAndVideos(channel_paths[1:])
 
 # Assign / create features
 comments["owner_comment"] = comments["comment_author"] == comments["videoOwnerChannelTitle"]
@@ -25,10 +25,10 @@ comments["response_time"] = (pd.to_datetime(comments["comment_published"]) -
 # Feature engineering (video)
 # Available and removed comments (in total and in percent)
 # =============================================================================
-user_comments = comments.query("owner_comment == False")
-available_comments = user_comments.groupby("videoId").size()
+available_comments = comments.groupby("videoId", dropna=False).size()
 available_comments.name = "available_comments"
-videos = pd.concat([videos, available_comments], axis = 1, join = "inner")
+
+videos = videos.join(available_comments).sort_values("available_comments")
 videos["removed_comments"] = (videos["commentCount"] - videos["available_comments"])
 videos["removed_comments_perc"] = videos["removed_comments"] / videos["commentCount"] * 100
 
@@ -36,6 +36,7 @@ videos["removed_comments_perc"] = videos["removed_comments"] / videos["commentCo
 # Feature engineering (video)
 # Median comment length
 # =============================================================================
+user_comments = comments.query("owner_comment == False")
 videos["mean_word_count"] = user_comments.groupby("videoId").agg({"comment_word_count":"median"})
 
 # =============================================================================
@@ -55,9 +56,8 @@ moderation_activity["mod_activity"] = (
 )
 
 moderation_activity = moderation_activity.set_index("videoId")
-videos = pd.concat([videos, moderation_activity["mod_activity"]],
-                    axis = 1, join = "inner")
 
+videos = videos.join(moderation_activity["mod_activity"]) 
 # =============================================================================
 # Feature engineering (video)
 # Ratio: Replies over top_level_user_comments
@@ -84,13 +84,13 @@ videos["ratio_RepliesToplevel"] = (videos["n_user_replies"] /
 sentiment_proportions = (user_comments
                         .query("top_level_comment == True")
                         .groupby(["videoId", "sentiment"]).size().reset_index())
+
 n_toplevel_neutral = sentiment_proportions.pivot(index = "videoId", 
                                                  columns = "sentiment", 
                                                  values = 0)["['neutral']"]
 n_toplevel_neutral.name = "n_toplevel_neutrals" 
 
-videos = pd.concat([videos, n_toplevel_neutral], axis = 1, join = "inner")
-
+videos = videos.join(n_toplevel_neutral)
 videos["polarity"] = videos["n_toplevel_neutrals"] / videos["n_toplevel_user_comments"]
 
 # =============================================================================
@@ -169,8 +169,7 @@ _ = (_.rename(columns={0: 'comments_per_author'})
       .sort_values(["videoId", "comments_per_author"], ascending = False))
 
 comments_per_author = _.groupby("videoId").agg({"comments_per_author" : "mean"})
-videos = pd.concat([videos, comments_per_author],
-                    axis = 1, join = "inner")
+videos = videos.join(comments_per_author)
 
 # =============================================================================
 # Add video url
@@ -187,7 +186,7 @@ videos["video_url"] =  URL_PREFIX + videos.index
 # for item in response["items"]:
 #     id_dict.update({item["id"]: item["snippet"]["title"]})
 
-with open(storage_path.parent.joinpath("youtube_categories.json"), 'r') as filepath:
+with open(project_path.joinpath("youtube_categories.json"), 'r') as filepath:
     categories_dict = json.load(filepath)
 
 videos["categoryId"] = videos["categoryId"].apply(str)
@@ -208,8 +207,6 @@ videos["comments_per_1kViews"] = round(videos["comments_per_1kViews"], 1)
 videos["responsivity"] = round(videos["responsivity"] * 100, 1)
 videos["duration"] = pd.to_timedelta(videos["duration"]).dt.total_seconds()
 
-videos["publishedAt"]
-
 convert_dict = {"mod_activity" : float,
                 "toplevel_sentiment_mean" : float,
                 "duration" : int}
@@ -223,7 +220,7 @@ channelIds = list(videos["videoOwnerChannelId"].unique())
 channels = pd.DataFrame()
 
 for channelId in channelIds:
-    _ = getChannelMetrics(channelId, "1")
+    _ = getChannelMetrics(channelId, "1")[0]
     _ = pd.DataFrame.from_dict(_, orient = "index").T
     channels = pd.concat([channels, _], axis = 0)
 
@@ -253,7 +250,6 @@ channels_metrics["removed_comments_perc"] = (
 
 channels = pd.concat([channels, channels_metrics], axis = 1)
 channels = channels.rename(columns = {"video_url":"n_videos"})
-channels = channels.drop(columns=["hiddenSubscriberCount"])
 
 # =============================================================================
 # Exports

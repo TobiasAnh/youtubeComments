@@ -113,11 +113,11 @@ def getVideoIds(playlistId, api_key_selector):
     # Instantiate youtube instance with given api_key_selector
     youtube = setupYouTube(api_key_selector)
     
-    # Fata frame populated in while loop below
+    # Data frame populated in while loop below
     raw_video_info = pd.DataFrame(columns=["videoId", "Title", "playlistId", 
                                            "videoOwnerChannelId", "videoOwnerChannelTitle"])
 
-    # Loops breaks when no nextPageToken is generated
+    # Loop breaks when no nextPageToken is generated
     nextPageToken = None
     while True:
 
@@ -165,9 +165,9 @@ def getVideoStatistics(raw_video_info, channel_path, api_key_selector):
             Parameters:
                     raw_video_info (DataFrame): contains videoIds required for loop 
                     channel_path (list): channel-specific folder path   
-                    api_key_selector (str): key of local json file
+                    api_key_selector (str): selects key in local json file
             Returns:
-                    No returns. videos infos are stored collectively in /{channel_path}/all_videos.csv                                
+                    No returns. video metrics are stored in /{channel_path}/all_videos.csv                                
     """
     
     # Instantiate youtube instance with given api_key_selector
@@ -261,7 +261,7 @@ def getCommentsFromVideos(videoIds, channel_path, api_key_selector):
         # Try/except part allows only to store a complete comment request per video
         nextPageToken = None
         try:
-            # Loops breaks when no nextPageToken is generated
+            # Loop breaks when no nextPageToken is generated
             while True: 
                 comments_request = youtube.commentThreads().list(
                         part = 'replies, snippet', 
@@ -315,7 +315,7 @@ def getCommentsFromVideos(videoIds, channel_path, api_key_selector):
                 if not nextPageToken:
                     break
                 
-            # Save populated dataframe locally
+            # Save populated dataframe locally in temporary folder 
             channel_path.joinpath("tmp").mkdir(exist_ok=True)
             video_comments.to_csv(channel_path.joinpath("tmp", f'{videoId}.csv'), escapechar='|')  
             
@@ -347,7 +347,7 @@ def getCommentsFromVideos(videoIds, channel_path, api_key_selector):
             print('Comments of all videos fetched :)')
 
 # =============================================================================
-# Outsourced functions
+# Outsourced functions - No API requests involved here
 # Concatenations and data restructuring
 # =============================================================================
 
@@ -459,7 +459,7 @@ relabeling_dict = {
                   }
             
 # =============================================================================
-# Plotly settings (include a select / deselect all button)
+# Plotly settings (include a button allowing select / deselect functionality)
 # =============================================================================
 px_select_deselect = dict(
     

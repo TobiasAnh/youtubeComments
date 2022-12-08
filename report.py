@@ -3,7 +3,6 @@ import numpy as np
 # from pandas_profiling import ProfileReport
 from datetime import datetime
 import plotly.express as px
-#from pandas.api.types import CategoricalDtype
 from youtubeComments.setup import storage_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
 from youtubeComments.setup import importDFdtypes
 
@@ -68,8 +67,8 @@ timeseries_comments.write_html(reports_path.joinpath("timeseries_comments.html")
 
 features = ["toplevel_sentiment_mean", "mod_activity", "responsivity", "ratio_RepliesToplevel",
             "mean_word_count", "comments_per_author", "removed_comments_perc", "polarity"]
-for feature in features:
 
+for feature in features:
     distributions_allVideos = px.strip(videos_cutoff, 
                                        x = feature, y = "videoOwnerChannelTitle",
                                        color = "videoOwnerChannelTitle",
@@ -140,7 +139,6 @@ scatter_plot = px.scatter(videos_cutoff,
 
 scatter_plot.update_layout(px_select_deselect)
 scatter_plot.write_html(reports_path.joinpath("scatter_plot.html"))
-
 
 sentiment_vs_popularity = videos_cutoff[["videoOwnerChannelTitle", kpi, "toplevel_sentiment_mean"]]
 

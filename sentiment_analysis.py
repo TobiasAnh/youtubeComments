@@ -32,24 +32,23 @@ def sentiment_analysis(channel_path):
     
     channel_title = comments_for_sentiment["videoOwnerChannelTitle"][0]
     # Loop for sentiment analysis
-    n_comments, x = len(comments_for_sentiment), 1 # loop reporting
+    n_comments = len(comments_for_sentiment) # required for loop reporting
     sentiment_estimate = [] # sentiments go here
    
     print(f'Analyzing {n_comments} comments fetched in {channel_title} ...')
     start = time.time()
     for comment in comments_for_sentiment["comment_string"]:
         
-        _ = len(sentiment_estimate)
         sentiment_estimate.append(sentiment.predict_sentiment([str(comment)]))
-      
+        fraction_done = len(sentiment_estimate) / n_comments
+        
         # loop reporting (in per mil steps)
-        if (_ / n_comments) > 0.001:
+        if (fraction_done) > 0.001:
         
             time_per_pm = time.time()
             time_passed = time_per_pm - start
-            print(f'{channel_title} | {round(x/1000, 3)} done | performance per run: {round(x*0.001/time_passed, 1)}')
+            print(f'{channel_title} | {round(fraction_done, 3)} done | time per loop: {round(time_passed, 2)}')
             
-            x += 1
             start = time.time()
     
         

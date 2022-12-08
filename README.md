@@ -9,7 +9,7 @@ https://developers.google.com/youtube/v3/getting-started
 
 2) Local folder structure 
 ```
-repository/          <-- pulled repo (input absolute local path as project_path in setup.py)
+repository/          <-- pulled repo (NOTE: absolute local path need to be declared as 'project_path' in setup.py)
     API_KEY.json     <-- create this json as follows {"first_key": "YOUR_API_KEY"}
     youtubeComments/
         setup.py
@@ -20,7 +20,7 @@ repository/          <-- pulled repo (input absolute local path as project_path 
     report.py
     ...
 storage_path/        <-- created automatically (location for csv files with fetched channels, videos and comment data)
-reports/             <-- created automatically (for final csv and plotly-html)
+reports/             <-- created automatically (for final csv and plotly files)
 ```
 
 1) Python libraries
@@ -32,6 +32,7 @@ Execute files in the following order (further instructions and info can be found
 1) data_fetch.py
 2) sentiment_analysis.py
 3) feature_engineering.py
-4) report.py
-5) data_update.py (not finished)
+4) report.py (optional)
+5) wordclouds.py (optional)
+6) data_update.py (not finished)
 
