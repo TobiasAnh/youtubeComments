@@ -3,8 +3,8 @@ import numpy as np
 # from pandas_profiling import ProfileReport
 from datetime import datetime
 import plotly.express as px
-from src.setup import storage_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
-from src.setup import importDFdtypes
+from src.data import storage_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
+from src.data import importDFdtypes
 
 # =============================================================================
 # Load and prepare video data
@@ -14,12 +14,12 @@ from src.setup import importDFdtypes
 videos = pd.read_csv(storage_path.joinpath("videos.csv"), 
                      lineterminator="\r", 
                      index_col="videoId")
-videos = videos.astype(importDFdtypes("videos"))
+videos = videos.astype(importDFdtypes("videos.json"))
 
 comments = pd.read_csv(storage_path.joinpath("comments.csv"), 
                        lineterminator="\r", 
                        index_col="comment_id")
-comments = comments.astype(importDFdtypes("comments"))
+comments = comments.astype(importDFdtypes("comments.json"))
 
 # Only videos published before report_deadline are included in report.
 # (to avoid including videos with insufficient time to accumulate comments
@@ -55,7 +55,7 @@ monthly_comments = (comments.query("comment_published < @report_deadline")
                             .size())
 
 timeseries_comments = px.line(monthly_comments,
-                                template = "simple_white")
+                              template = "simple_white")
 
 timeseries_comments.update_layout(px_select_deselect)
 timeseries_comments.write_html(reports_path.joinpath("timeseries_comments.html"))
@@ -246,4 +246,3 @@ for feature in features:
     quaterly_metrics.update_xaxes(title = None)
     file_name = f"Quartalsverlauf_{relabeling_dict.get(feature).replace(' ','_')}.html"
     quaterly_metrics.write_html(quarter_path.joinpath(file_name))
-

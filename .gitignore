@@ -3,3 +3,4 @@ __pycache__/
 youtubeComments/__pychache__/
 API_KEY.json
 report_singleChannel.py 
+.env

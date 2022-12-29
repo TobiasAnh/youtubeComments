@@ -3,7 +3,7 @@ import nltk
 import pandas as pd
 from wordcloud import WordCloud
 
-from youtubeComments.setup import project_path, storage_path, reports_path
+from src.data import project_path, storage_path, reports_path
 
 channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 
@@ -11,7 +11,7 @@ channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 # Stopwords (common words with no meaning)
 nltk.download('stopwords', quiet=True)
 stopwords_nltk = nltk.corpus.stopwords.words('german')
-stopwords_foundOnline = list(pd.read_csv(project_path.joinpath("stopwords_de.csv")).columns)
+stopwords_foundOnline = list(pd.read_csv(project_path.joinpath("references", "stopwords_de.csv")).columns)
 own_stopwords = ["bzw", "etc", "einfach", "schon", "sieht", "halt", "genau", "ne", "eigentlich", "eher", "finde", "sagen", "sogar"]
 stopwords_combined = (stopwords_foundOnline + stopwords_nltk + own_stopwords)
 

@@ -1,8 +1,8 @@
 import json
 import numpy as np
 import pandas as pd
-from src.setup import storage_path, project_path
-from src.setup import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
+from src.data import first_key, storage_path, project_path
+from src.data import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
 
 # =============================================================================
 # Data import of csv files (the ones generated in the channel subfolders)
@@ -118,7 +118,8 @@ videos["toplevel_sentiment_mean"] = (
 videos["replies_sentiment_mean"] = (
     comments.query("top_level_comment == False & owner_comment == False")
     .groupby("videoId")
-    .agg({"sentiment": "mean"}).apply(lambda x: round(x, 3))
+    .agg({"sentiment": "mean"})
+    .apply(lambda x: round(x, 3))
 )
 
 # Remove sentiment estimation for videos with insufficient comment amount 
@@ -181,12 +182,12 @@ videos["video_url"] =  URL_PREFIX + videos.index
 # Convert YT categories
 # =============================================================================
 
-# NOTE: categories can be fetched from the API as well
+# Categories can be fetched from the API as well
 # id_dict = dict()
 # for item in response["items"]:
 #     id_dict.update({item["id"]: item["snippet"]["title"]})
 
-with open(project_path.joinpath("youtube_categories.json"), 'r') as filepath:
+with open(project_path.joinpath("references", "youtube_categories.json"), 'r') as filepath:
     categories_dict = json.load(filepath)
 
 videos["categoryId"] = videos["categoryId"].apply(str)
@@ -216,16 +217,18 @@ videos = videos.astype(convert_dict)
 # Channel-wide features
 # =============================================================================
 
+# Get basic metrics
 channelIds = list(videos["videoOwnerChannelId"].unique())
 channels = pd.DataFrame()
 
 for channelId in channelIds:
-    _ = getChannelMetrics(channelId, "1")[0]
+    _ = getChannelMetrics(channelId, first_key)[0]
     _ = pd.DataFrame.from_dict(_, orient = "index").T
     channels = pd.concat([channels, _], axis = 0)
 
 channels = channels.set_index("channelId")
 
+# Aggregate metrics from videos
 agg_dict = {
       "video_url" : "size",
       "commentCount" : "sum",
@@ -240,7 +243,6 @@ agg_dict = {
       "toplevel_sentiment_mean": "mean", # Note: simple average here, no weights
       "ratio_RepliesToplevel" : "mean"
 }
-
 channels_metrics = videos.groupby("videoOwnerChannelId").agg(agg_dict)
 
 channels_metrics["removed_comments_perc"] = (
@@ -258,12 +260,12 @@ channels = channels.rename(columns = {"video_url":"n_videos"})
 
 # Channels
 channels.to_csv(storage_path.joinpath("channels.csv"), lineterminator="\r", index="videoOwnerChannelId")
-exportDFdtypes(channels, "channels")
+exportDFdtypes(channels, "channels.json")
 
 # Videos
 videos.to_csv(storage_path.joinpath("videos.csv"), lineterminator="\r", index="videoId")
-exportDFdtypes(videos, "videos")
+exportDFdtypes(videos, "videos.json")
 
 # Comments
 comments.to_csv(storage_path.joinpath("comments.csv"), lineterminator="\r", index="comment_id")
-exportDFdtypes(comments, "comments")
+exportDFdtypes(comments, "comments.json")

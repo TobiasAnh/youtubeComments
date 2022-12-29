@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
-
 # =============================================================================
 # Basic setup
 # =============================================================================
 
 import os
-import getpass
-from pathlib import Path
-import pandas as pd
 import json
+import pandas as pd
+from pathlib import Path
+from dotenv import load_dotenv, find_dotenv
 from googleapiclient.discovery import build
 
-# Define location of repository
-user = getpass.getuser()
-project_path = Path(f'/home/{user}/OneDrive/YouTubeAPI/scripts') # put repo here
-project_path.mkdir(parents=True, exist_ok=True)
-os.chdir(project_path)
+# load .env entries as environment variables
+dotenv_path = find_dotenv()
+load_dotenv(dotenv_path)
+first_key = os.environ.get("API_KEY_1")
+second_key = os.environ.get("API_KEY_2")
+project_path = Path(os.environ.get("project_path")) 
 
 # Define location where downloads and reports will be stored
+os.chdir(project_path)
 storage_path = project_path.parent.joinpath("storage_path")
 storage_path.mkdir(exist_ok=True)
 
@@ -43,27 +44,19 @@ reports_path.mkdir(exist_ok = True)
 # HttpError: <HttpError 403 when requesting ... 
 # =============================================================================
 
-# Keys from local json file for api_key_selector
-first_key = "1"
-second_key = "2"
-
-
 def setupYouTube(api_key_selector):
 
     """
     Build YouTube instance (Version 3) with account-related API key.
-    Requires API key in JSON file stored in local project_path.
+    Requires API key stored in /project_path/.env
     
             Parameters:
-                api_key_selector (str): key of local json file
+                api_key_selector (str): choose between 'first_key' or 'second_key'
             Return: 
                 youtube (googleapiclient.discovery.Resource): youtube request instance
     """
     
-    with open(project_path.joinpath("API_KEY.json"), 'r') as filepath:
-        picked_api_key = json.load(filepath).get(api_key_selector)
-
-    youtube = build(serviceName="youtube", version="v3", developerKey = picked_api_key)
+    youtube = build(serviceName="youtube", version="v3", developerKey = api_key_selector)
     return youtube
 
 def getChannelMetrics(channelId, api_key_selector):
@@ -73,7 +66,7 @@ def getChannelMetrics(channelId, api_key_selector):
     
             Parameters:
                     channelId (str): valid YouTube channelId    
-                    api_key_selector (str): key of local json file
+                    api_key_selector (str): choose between 'first_key' or 'second_key'
             Returns:
                     channel (dict): stores basic channel info
                     channel_foldername (str): name used to create local folder
@@ -104,7 +97,7 @@ def getVideoIds(playlistId, api_key_selector):
     
             Parameters:
                     playlistId (str): valid YouTube playlistId (e.g. upload playlist)     
-                    api_key_selector (str): key of local json file
+                    api_key_selector (str): choose between 'first_key' or 'second_key'
             Returns:
                     raw_video_info (DataFrame): videoIds from given playlists and some additional info                                   
     """
@@ -235,7 +228,7 @@ def getCommentsFromVideos(videoIds, channel_path, api_key_selector):
             Parameters:
                     videoId_list (list): list of valid YouTube videoIds
                     channel_path (PosixPath): channel-specific folder path
-                    api_key_selector (str): key of local json file
+                    api_key_selector (str): choose between 'first_key' or 'second_key'
                     
             Returns:
                     No returns. If comment fetch incomplete "missing_videos.json" is stored locally
@@ -344,6 +337,7 @@ def getCommentsFromVideos(videoIds, channel_path, api_key_selector):
             print('Rerun succesfull. Comments of all videos fetched :)')
         else:
             print('Comments of all videos fetched :)')
+            print()
 
 # =============================================================================
 # Outsourced functions - No API requests involved here
@@ -391,37 +385,36 @@ def concatCommentsAndVideos(channel_paths):
 # Export and import of datatypes
 # =============================================================================
 
-def exportDFdtypes(df, name, storage_path = storage_path):
+def exportDFdtypes(df, jsonfile, storage_path = storage_path):
     """ 
     Exports data types from given data frame into json file
     See also importDFdtypes().
     
     Parameters:
             df (DataFrame): name of DataFrame
-            name (str): Name of json file
+            jsonfile (str): Name of json file
             storage_path (PosixPath): Path used for file storage
-            
     """
     
     df_dtypes = df.dtypes.astype(str).to_dict()
     
-    with open(storage_path.joinpath(f'{name}.json'), 'w') as f:
+    with open(storage_path.joinpath(jsonfile), 'w') as f:
         json.dump(df_dtypes, f)
         
-def importDFdtypes(name, storage_path = storage_path):
+def importDFdtypes(jsonfile, storage_path = storage_path):
     """ 
     ImoportExports data types from given data frame into json file
     See also exportDFdtypes().
     
     Parameters:
-            name (str): Name of json file
+            jsonfile (str): Name of json file
             storage_path (PosixPath): Path to be used for file storage
     Return:
             dict() with datatypes 
         
     """
     
-    with open(storage_path.joinpath(f'{name}.json'), 'r') as f:
+    with open(storage_path.joinpath(jsonfile), 'r') as f:
         return json.load(f)
     
             

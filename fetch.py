@@ -4,13 +4,13 @@ import shutil
 import pandas as pd
 import json
 
-from src.setup import first_key, second_key, storage_path, project_path
-from src.setup import getChannelMetrics, getVideoIds, getVideoStatistics, getCommentsFromVideos
+from src.data import first_key, second_key, storage_path, project_path
+from src.data import getChannelMetrics, getVideoIds, getVideoStatistics, getCommentsFromVideos
 
 # =============================================================================
 # Channel Ids overview
 # =============================================================================
-channels = pd.read_csv(project_path.joinpath("channelIds.csv"))
+channels = pd.read_csv(project_path.joinpath("references", "channelIds.csv"))
 print(channels)
 
 # =============================================================================
@@ -54,19 +54,22 @@ if (
     
 else:
     print('--------------------')
-    # Start comment extraction. 
+    # Stores only videos where all comment have been extracted
+    # Missing videosIds are dumped in local json file
     getCommentsFromVideos(videoIds, channel_path, api_key_selector = first_key)
     
-    # Due to unknown issues, comments are not fetched sometimes (two times seems sufficent)
-    runs = 2
-    for i in range(runs):
-        if "missing_videos.json" in os.listdir(channel_path):
+    # Various reasons may lead to incomplete comment extraxtions and therefore incomplete videos
+    
+    # Sometines comments are simply not fetched (two times seems sufficent)
+    if "missing_videos.json" in os.listdir(channel_path):
+        runs = 2
+        for i in range(runs):
             print(f"missing_videos.json found, try {i+1} ... ")
             with open(channel_path.joinpath("missing_videos.json"), 'r') as filepath:
                     missing_videos = json.load(filepath)
         
             getCommentsFromVideos(missing_videos, channel_path, api_key_selector = first_key)
-    
+
     # If still missing, most likely no quotas are left. Try with other API key.
     if "missing_videos.json" in os.listdir(channel_path):
         print("missing_videos.json found, try with other API KEY ... ")
@@ -84,7 +87,7 @@ else:
 # including some augmentation of features from all_videos.csv 
 # =============================================================================
 
-if input('Type "Y" to concatenate individual comment csv files :') == "Y":
+if input('Type "Y" to concatenate csv files in tmp/:') == "Y":
     video_files = os.listdir(channel_path.joinpath("tmp"))
     
     # Concatenate 
