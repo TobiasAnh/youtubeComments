@@ -2,10 +2,9 @@
 
 # =============================================================================
 # Basic setup
-# Note: only tested on linux so far
 # =============================================================================
 
-import os 
+import os
 import getpass
 from pathlib import Path
 import pandas as pd

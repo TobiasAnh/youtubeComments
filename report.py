@@ -3,8 +3,8 @@ import numpy as np
 # from pandas_profiling import ProfileReport
 from datetime import datetime
 import plotly.express as px
-from youtubeComments.setup import storage_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
-from youtubeComments.setup import importDFdtypes
+from src.setup import storage_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
+from src.setup import importDFdtypes
 
 # =============================================================================
 # Load and prepare video data

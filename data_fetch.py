@@ -4,8 +4,8 @@ import shutil
 import pandas as pd
 import json
 
-from youtubeComments.setup import first_key, second_key, storage_path, project_path
-from youtubeComments.setup import getChannelMetrics, getVideoIds, getVideoStatistics, getCommentsFromVideos
+from src.setup import first_key, second_key, storage_path, project_path
+from src.setup import getChannelMetrics, getVideoIds, getVideoStatistics, getCommentsFromVideos
 
 # =============================================================================
 # Channel Ids overview

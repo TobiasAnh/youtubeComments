@@ -1,8 +1,8 @@
 import json
 import numpy as np
 import pandas as pd
-from youtubeComments.setup import storage_path, project_path
-from youtubeComments.setup import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
+from src.setup import storage_path, project_path
+from src.setup import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
 
 # =============================================================================
 # Data import of csv files (the ones generated in the channel subfolders)

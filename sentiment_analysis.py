@@ -2,7 +2,7 @@ import os
 import time
 import pandas as pd
 from germansentiment import SentimentModel # model details see below
-from youtubeComments.setup import storage_path
+from src.setup import storage_path
 
 # Manually channel_path for sentiment analysis
 channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]

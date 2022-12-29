@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import pandas as pd
 
-from youtubeComments import storage_path, importDFdtypes
-from youtubeComments import getVideoIds, getVideoStatistics, getCommentsFromVideos
-from youtubeComments import first_key
+from src import storage_path, importDFdtypes
+from src import getVideoIds, getVideoStatistics, getCommentsFromVideos
+from src import first_key
 
 # General question
 # Update the complete dataset? In theory, all videos can be commented at any time. Thus, everything
