@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import os
 import json
 import pandas as pd
@@ -13,7 +12,7 @@ dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 first_key = os.environ.get("API_KEY_1")
 second_key = os.environ.get("API_KEY_2")
-project_path = Path(os.environ.get("project_path")) 
+project_path = Path(os.getcwd())
 
 # Define locations where downloads and reports will be stored
 os.chdir(project_path)
@@ -29,6 +28,7 @@ processed_path.mkdir(exist_ok=True)
 reports_path = data_path.joinpath("reports") 
 reports_path.mkdir(exist_ok = True)
 
+# Functions for YouTube API requests
 def setupYouTube(api_key_selector):
 
     """

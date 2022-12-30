@@ -12,7 +12,7 @@ channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 print(f'found {len(channel_paths)} folders / channels.')
 
 # first channel paths are excluded (some channels not yet relevant)
-comments, videos = concatCommentsAndVideos(channel_paths[2:])
+comments, videos = concatCommentsAndVideos(channel_paths)
 
 # Assign / create features
 comments["owner_comment"] = comments["comment_author"] == comments["videoOwnerChannelTitle"]

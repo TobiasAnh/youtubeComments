@@ -1,6 +1,6 @@
 # Individual ignores
-report_singleChannel.py 
-update.py 
+report_singleChannel.py
+update.py
 data/
 
 *.bkp

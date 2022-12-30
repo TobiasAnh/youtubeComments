@@ -17,24 +17,25 @@ stopwords_combined = (stopwords_foundOnline + stopwords_nltk + own_stopwords)
 channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 
 # Start generating wordclouds (loops through channel paths)
-for channel_path in channel_paths[2:]:
+for channel_path in channel_paths:
 
     selected_comments_df = pd.read_csv(channel_path.joinpath("all_comments_withSentiment.csv"), 
                                        index_col=0,
                                        lineterminator="\r",
-                                       parse_dates=["publishedAt", "comment_published"],
-                                       dtype={"video_published_year": int})
+                                       parse_dates=["publishedAt", "comment_published"])
+    
     
     channel_title = selected_comments_df["videoOwnerChannelTitle"][0]
     channel_foldername = channel_title.replace(" ", "_").replace("&", "_")
     
-    # Generate word clouds for every year (within subfolder)
-    channel_years = list(selected_comments_df["video_published_year"].unique())
+    selected_comments_df["comment_published_year"] = selected_comments_df["comment_published"].dt.year
+    
+    channel_years = list(selected_comments_df["comment_published_year"].unique())
     reports_path.joinpath(channel_foldername).mkdir(parents=True, exist_ok=True)
     
     for year in channel_years:
         
-        selected_comments_filtered = selected_comments_df.query("comments_published_year == @year")
+        selected_comments_filtered = selected_comments_df.query("comment_published_year == @year")
         comments_for_wordcloud_filtered = selected_comments_filtered["comment_string"]
         comments_bagOfWords = ' '.join(comments_for_wordcloud_filtered.apply(str))
         
