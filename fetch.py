@@ -66,7 +66,7 @@ else:
         for i in range(runs):
             print(f"missing_videos.json found, try {i+1} ... ")
             with open(channel_path.joinpath("missing_videos.json"), 'r') as filepath:
-                    missing_videos = json.load(filepath)
+                missing_videos = json.load(filepath)
         
             getCommentsFromVideos(missing_videos, channel_path, api_key_selector = first_key)
 
@@ -74,7 +74,7 @@ else:
     if "missing_videos.json" in os.listdir(channel_path):
         print("missing_videos.json found, try with other API KEY ... ")
         with open(channel_path.joinpath("missing_videos.json"), 'r') as filepath:
-                missing_videos = json.load(filepath)
+            missing_videos = json.load(filepath)
                 
         getCommentsFromVideos(missing_videos, channel_path, api_key_selector = second_key) 
         
