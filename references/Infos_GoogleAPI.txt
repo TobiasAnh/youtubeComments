@@ -1,0 +1,17 @@
+# =============================================================================
+# YouTube requests
+# https://developers.google.com/youtube/v3/getting-started
+# API information 
+# Methods available to a build instance are listed here ...
+# https://googleapis.github.io/google-api-python-client/docs/dyn/youtube_v3.html
+
+# Each instance comes with individual methods
+# https://developers.google.com/youtube/v3/docs
+
+# 50,000 requests per project, 10 queries per second (QPS) per IP address.
+# https://developers.google.com/analytics/devguides/config/mgmt/v3/limits-quotas
+# https://developers.google.com/youtube/v3/determine_quota_cost
+
+# If quota exceeded, error below occurs ... 
+# HttpError: <HttpError 403 when requesting ... 
+# =============================================================================

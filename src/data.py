@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-# =============================================================================
-# Basic setup
-# =============================================================================
 
 import os
 import json
@@ -11,38 +8,26 @@ from dotenv import load_dotenv, find_dotenv
 from googleapiclient.discovery import build
 
 # load .env entries as environment variables
+# NOTE: .env needs to be filled manually
 dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 first_key = os.environ.get("API_KEY_1")
 second_key = os.environ.get("API_KEY_2")
 project_path = Path(os.environ.get("project_path")) 
 
-# Define location where downloads and reports will be stored
+# Define locations where downloads and reports will be stored
 os.chdir(project_path)
-storage_path = project_path.parent.joinpath("storage_path")
+data_path = project_path.joinpath("data")
+data_path.mkdir(exist_ok=True)
+
+storage_path = data_path.joinpath("interim")
 storage_path.mkdir(exist_ok=True)
 
-reports_path = storage_path.parent.joinpath("reports") 
+processed_path = data_path.joinpath("processed")
+processed_path.mkdir(exist_ok=True)
+
+reports_path = data_path.joinpath("reports") 
 reports_path.mkdir(exist_ok = True)
-
-# =============================================================================
-# 
-# YouTube requests
-# https://developers.google.com/youtube/v3/getting-started
-# API information 
-# Methods available to a build instance are listed here ...
-# https://googleapis.github.io/google-api-python-client/docs/dyn/youtube_v3.html
-
-# Each instance comes with individual methods
-# https://developers.google.com/youtube/v3/docs
-
-# 50,000 requests per project, 10 queries per second (QPS) per IP address.
-# https://developers.google.com/analytics/devguides/config/mgmt/v3/limits-quotas
-# https://developers.google.com/youtube/v3/determine_quota_cost
-
-# If quota exceeded, error below occurs ... 
-# HttpError: <HttpError 403 when requesting ... 
-# =============================================================================
 
 def setupYouTube(api_key_selector):
 
@@ -385,7 +370,7 @@ def concatCommentsAndVideos(channel_paths):
 # Export and import of datatypes
 # =============================================================================
 
-def exportDFdtypes(df, jsonfile, storage_path = storage_path):
+def exportDFdtypes(df, jsonfile):
     """ 
     Exports data types from given data frame into json file
     See also importDFdtypes().
@@ -393,28 +378,26 @@ def exportDFdtypes(df, jsonfile, storage_path = storage_path):
     Parameters:
             df (DataFrame): name of DataFrame
             jsonfile (str): Name of json file
-            storage_path (PosixPath): Path used for file storage
     """
     
     df_dtypes = df.dtypes.astype(str).to_dict()
     
-    with open(storage_path.joinpath(jsonfile), 'w') as f:
+    with open(processed_path.joinpath(jsonfile), 'w') as f:
         json.dump(df_dtypes, f)
         
-def importDFdtypes(jsonfile, storage_path = storage_path):
+def importDFdtypes(jsonfile):
     """ 
     ImoportExports data types from given data frame into json file
     See also exportDFdtypes().
     
     Parameters:
             jsonfile (str): Name of json file
-            storage_path (PosixPath): Path to be used for file storage
     Return:
             dict() with datatypes 
         
     """
     
-    with open(storage_path.joinpath(jsonfile), 'r') as f:
+    with open(processed_path.joinpath(jsonfile), 'r') as f:
         return json.load(f)
     
             

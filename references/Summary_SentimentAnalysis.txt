@@ -1,0 +1,25 @@
+# =============================================================================
+# Detailed model info
+# =============================================================================
+
+# German Sentiment analysis
+# !pip install germansentiment
+# https://huggingface.co/oliverguhr/german-sentiment-bert
+# 
+# Paper: https://aclanthology.org/2020.lrec-1.202.pdf
+# 
+# Data Collection: Training data has been gathered fron numerous sources. Data labeling is partly manually but mostly derived from 
+# ratings such as Google PlayStore, Holiday reviews, etc. (e.g. 1-2 Stars counts as negative and 4-5 stars positive; 3 stars excluded).
+# Data set also augumented by wikipedia sentences to increase number of neutral german sentences (assuming wikipedia text is neutral).
+#
+# Preprocessing: Removed all URLs, numbers, non-German characters. Replaced smiley and emojos with sentiment tags. 
+# Resulting number of traning is shown in Table 1 (paper).
+# 
+# Train/Valid/Test split: 70% for training, 20 % for validation (hyperparameter optimi.) and 10 % for testing.
+# Additionally, they created two versions of the data set (one unbalanced and one balanced data set). 
+# Unbalanced data set: contains ALL 5.3 Million samples (positives: ~3.7 millions, neutrals: ~1.0 million, negative: ~ 0.6 million)
+# Balanced data set: contains ~1.8 Million samples (positives/neutrals/negatives: ~0.6 million)
+# 
+# Two main models have been used: FastText and BERT with performance metrics of F1 Scores and confusion matrices
+# Additionally, everything done on the two different data sets 
+# =============================================================================

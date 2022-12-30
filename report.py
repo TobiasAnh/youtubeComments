@@ -3,7 +3,7 @@ import numpy as np
 # from pandas_profiling import ProfileReport
 from datetime import datetime
 import plotly.express as px
-from src.data import storage_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
+from src.data import storage_path, processed_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
 from src.data import importDFdtypes
 
 # =============================================================================
@@ -11,12 +11,12 @@ from src.data import importDFdtypes
 # =============================================================================
 
 # Import csv and assign correct dtypes (both videos and comments)
-videos = pd.read_csv(storage_path.joinpath("videos.csv"), 
+videos = pd.read_csv(processed_path.joinpath("videos.csv"), 
                      lineterminator="\r", 
                      index_col="videoId")
 videos = videos.astype(importDFdtypes("videos.json"))
 
-comments = pd.read_csv(storage_path.joinpath("comments.csv"), 
+comments = pd.read_csv(processed_path.joinpath("comments.csv"), 
                        lineterminator="\r", 
                        index_col="comment_id")
 comments = comments.astype(importDFdtypes("comments.json"))

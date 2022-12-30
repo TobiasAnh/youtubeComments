@@ -5,18 +5,19 @@ from wordcloud import WordCloud
 
 from src.data import project_path, storage_path, reports_path
 
-channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 
 # Gathering and defining stopwords prior to wordcloud creation 
-# Stopwords (common words with no meaning)
+# Stopwords (common words with no/little meaning)
 nltk.download('stopwords', quiet=True)
 stopwords_nltk = nltk.corpus.stopwords.words('german')
 stopwords_foundOnline = list(pd.read_csv(project_path.joinpath("references", "stopwords_de.csv")).columns)
 own_stopwords = ["bzw", "etc", "einfach", "schon", "sieht", "halt", "genau", "ne", "eigentlich", "eher", "finde", "sagen", "sogar"]
 stopwords_combined = (stopwords_foundOnline + stopwords_nltk + own_stopwords)
 
+channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
+
 # Start generating wordclouds (loops through channel paths)
-for channel_path in [channel_paths[-1]]:
+for channel_path in channel_paths[2:]:
 
     selected_comments_df = pd.read_csv(channel_path.joinpath("all_comments_withSentiment.csv"), 
                                        index_col=0,

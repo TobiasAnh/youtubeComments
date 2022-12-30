@@ -1,5 +1,12 @@
+# Individual ignores
 report_singleChannel.py 
 update.py 
+data/
+
+*.bkp
+*.dtmp
+
+# General ignores (template) below
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

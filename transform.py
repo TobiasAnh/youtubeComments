@@ -1,18 +1,18 @@
 import json
 import numpy as np
 import pandas as pd
-from src.data import first_key, storage_path, project_path
+from src.data import first_key, project_path, storage_path, processed_path
 from src.data import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
 
 # =============================================================================
-# Data import of csv files (the ones generated in the channel subfolders)
+# Data import of csv files (the ones generated in interim/@channel)
 # =============================================================================
 
 channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 print(f'found {len(channel_paths)} folders / channels.')
 
 # first channel paths are excluded (some channels not yet relevant)
-comments, videos = concatCommentsAndVideos(channel_paths[1:])
+comments, videos = concatCommentsAndVideos(channel_paths[2:])
 
 # Assign / create features
 comments["owner_comment"] = comments["comment_author"] == comments["videoOwnerChannelTitle"]
@@ -259,13 +259,13 @@ channels = channels.rename(columns = {"video_url":"n_videos"})
 # =============================================================================
 
 # Channels
-channels.to_csv(storage_path.joinpath("channels.csv"), lineterminator="\r", index="videoOwnerChannelId")
+channels.to_csv(processed_path.joinpath("channels.csv"), lineterminator="\r", index="videoOwnerChannelId")
 exportDFdtypes(channels, "channels.json")
 
 # Videos
-videos.to_csv(storage_path.joinpath("videos.csv"), lineterminator="\r", index="videoId")
+videos.to_csv(processed_path.joinpath("videos.csv"), lineterminator="\r", index="videoId")
 exportDFdtypes(videos, "videos.json")
 
 # Comments
-comments.to_csv(storage_path.joinpath("comments.csv"), lineterminator="\r", index="comment_id")
+comments.to_csv(processed_path.joinpath("comments.csv"), lineterminator="\r", index="comment_id")
 exportDFdtypes(comments, "comments.json")
