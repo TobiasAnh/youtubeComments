@@ -5,8 +5,7 @@
 # German Sentiment analysis
 # !pip install germansentiment
 # https://huggingface.co/oliverguhr/german-sentiment-bert
-# 
-# Paper: https://aclanthology.org/2020.lrec-1.202.pdf
+# # Paper: https://aclanthology.org/2020.lrec-1.202.pdf
 # 
 # Data Collection: Training data has been gathered fron numerous sources. Data labeling is partly manually but mostly derived from 
 # ratings such as Google PlayStore, Holiday reviews, etc. (e.g. 1-2 Stars counts as negative and 4-5 stars positive; 3 stars excluded).

@@ -1,8 +1,8 @@
 import json
 import numpy as np
 import pandas as pd
-from src.data import first_key, project_path, storage_path, processed_path
-from src.data import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
+from src.funcs import first_key, project_path, storage_path, processed_path
+from src.funcs import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
 
 # =============================================================================
 # Data import of csv files (the ones generated in interim/@channel)
@@ -10,8 +10,6 @@ from src.data import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
 
 channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 print(f'found {len(channel_paths)} folders / channels.')
-
-# first channel paths are excluded (some channels not yet relevant)
 comments, videos = concatCommentsAndVideos(channel_paths)
 
 # Assign / create features
@@ -74,24 +72,24 @@ videos["n_user_replies"] = (
 )
 
 videos["ratio_RepliesToplevel"] = (videos["n_user_replies"] /
-                                   videos["n_toplevel_user_comments"] )
+                                   videos["n_toplevel_user_comments"])
 
 # =============================================================================
 # Feature engineering (video)
-# Polarity (derived from sentiment) 
+# Neutrality (derived from sentiment) 
 # =============================================================================
 
 sentiment_proportions = (user_comments
                         .query("top_level_comment == True")
-                        .groupby(["videoId", "sentiment"]).size().reset_index())
+                        .groupby(["videoId", "prediction"]).size().reset_index())
 
 n_toplevel_neutral = sentiment_proportions.pivot(index = "videoId", 
-                                                 columns = "sentiment", 
-                                                 values = 0)["['neutral']"]
+                                                 columns = "prediction", 
+                                                 values = 0)["neutral"]
 n_toplevel_neutral.name = "n_toplevel_neutrals" 
 
 videos = videos.join(n_toplevel_neutral)
-videos["polarity"] = videos["n_toplevel_neutrals"] / videos["n_toplevel_user_comments"]
+videos["toplevel_neutrality"] = videos["n_toplevel_neutrals"] / videos["n_toplevel_user_comments"]
 
 # =============================================================================
 # Feature engineering (video)
@@ -99,26 +97,23 @@ videos["polarity"] = videos["n_toplevel_neutrals"] / videos["n_toplevel_user_com
 # =============================================================================
 
 # Transforming sentiment into numerical feature
-comments["sentiment"] = (
-                          comments["sentiment"]
+comments["prediction_num"] = (
+                          comments["prediction"]
                          .astype("category")
-                         .cat.rename_categories({"['positive']": 1,
-                                                 "['neutral']": 0.5,
-                                                 "['negative']": 0})
+                         .cat.rename_categories({'positive': 1,
+                                                 'neutral': 0.5,
+                                                 'negative': 0})
                          .astype("double")
                         )
 
-videos["toplevel_sentiment_mean"] = (
-    comments.query("top_level_comment == True & owner_comment == False")
-   .groupby("videoId")
-   .agg({"sentiment": "mean",})
-   .apply(lambda x: round(x, 3))
-)
+videos["toplevel_sentiment_mean"] = (comments.query("top_level_comment == True & owner_comment == False")
+                                    .groupby("videoId")
+                                    .agg({"prediction_num":"mean"}))   
 
 videos["replies_sentiment_mean"] = (
     comments.query("top_level_comment == False & owner_comment == False")
     .groupby("videoId")
-    .agg({"sentiment": "mean"})
+    .agg({"prediction_num": "mean"})
     .apply(lambda x: round(x, 3))
 )
 
@@ -164,7 +159,7 @@ videos["comments_per_1kViews"] = videos["commentCount"] / videos["viewCount"] * 
 # Feature engineering (video)
 # Comments per author
 # =============================================================================
-comments.groupby("videoId").agg({"comment_author": "size"})
+
 _ = user_comments.groupby(["videoId", "comment_author"]).size().reset_index()
 _ = (_.rename(columns={0: 'comments_per_author'})
       .sort_values(["videoId", "comments_per_author"], ascending = False))
@@ -198,8 +193,7 @@ videos["categoryId"].replace(categories_dict, inplace=True)
 # =============================================================================
 
 comments["response_time_sec"] = comments["response_time"].dt.total_seconds()
-comments["duration_sec"] = pd.to_timedelta(comments["duration_sec"]).dt.total_seconds()
-comments = comments.drop(columns=["response_time", "duration_sec"], axis = 1)
+comments = comments.drop(columns=["response_time"], axis = 1)
 comments = comments.set_index("comment_id")
 
 videos["removed_comments_perc"] = round(videos["removed_comments_perc"], 1)
@@ -250,6 +244,7 @@ channels_metrics["removed_comments_perc"] = (
     (channels_metrics["available_comments"] + channels_metrics["removed_comments"])
 )
 
+# Concat aggregated metrics
 channels = pd.concat([channels, channels_metrics], axis = 1)
 channels = channels.rename(columns = {"video_url":"n_videos"})
 

@@ -3,8 +3,7 @@ import nltk
 import pandas as pd
 from wordcloud import WordCloud
 
-from src.data import project_path, storage_path, reports_path
-
+from src.funcs import project_path, storage_path, reports_path
 
 # Gathering and defining stopwords prior to wordcloud creation 
 # Stopwords (common words with no/little meaning)

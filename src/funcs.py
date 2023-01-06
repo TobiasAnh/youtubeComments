@@ -142,7 +142,7 @@ def getVideoStatistics(raw_video_info, channel_path, api_key_selector):
             Parameters:
                     raw_video_info (DataFrame): contains videoIds required for loop 
                     channel_path (list): channel-specific folder path   
-                    api_key_selector (str): selects key in local json file
+                    api_key_selector (str): choose between 'first_key' or 'second_key'
             Returns:
                     No returns. video metrics are stored in /{channel_path}/all_videos.csv                                
     """
@@ -297,7 +297,7 @@ def getCommentsFromVideos(videoIds, channel_path, api_key_selector):
             video_comments.to_csv(channel_path.joinpath("tmp", f'{videoId}.csv'), escapechar='|')  
             
             progress = f'Video {videoIds.index(videoId)+1} of {len(videoIds)}'
-            print(f'{progress} ({videoId})| {len(video_comments)} comments found')
+            print(f'{progress} {videoId} | {len(video_comments)} comments found')
         
         # If requests fails, give only info via print
         except:
@@ -324,47 +324,57 @@ def getCommentsFromVideos(videoIds, channel_path, api_key_selector):
             print('Comments of all videos fetched :)')
             print()
 
+
+
+
 # =============================================================================
-# Outsourced functions - No API requests involved here
-# Concatenations and data restructuring
+# Outsourced functions - No API requests involved below
+# Mainly concatenations and data restructuring
 # =============================================================================
+
 
 def concatCommentsAndVideos(channel_paths):
     
     """ 
     Turns various csv files back into DataFrames.
     Requires two csv's "all_comments_withSentiment.csv" and "all_videos.csv" 
-    in each subfolder listed in channel_paths
+    in each subfolder listed in channel_paths.
     
     Parameters:
             channel_paths (list): list of PosixPath's
             
     Returns:
-            comments (DataFrame): comments found within all channel_paths
-            videos (DataFrame): videos found within all channel_paths
+            comments (DataFrame): concatenated comments found within channel_paths
+            videos (DataFrame): concatenaed videos found within channel_paths
     """
     
     comments = pd.DataFrame()
     videos = pd.DataFrame()
+    
     for channel_path in channel_paths:
+        try:
+            # Import all_comments...
+            comments_per_channel = pd.read_csv(channel_path.joinpath("all_comments_withSentiment.csv"), 
+                                               index_col = 0, lineterminator="\r",
+                                               parse_dates = ["publishedAt", "comment_published"] )
+            
+            comments = pd.concat([comments, comments_per_channel], axis = 0)
         
-        comments_per_channel = pd.read_csv(channel_path.joinpath("all_comments_withSentiment.csv"), 
-                                            index_col = 0, lineterminator="\r",
-                                            parse_dates = ["publishedAt", "comment_published"] )
+            # Import all_videos 
+            videos_per_channel = pd.read_csv(channel_path.joinpath("all_videos.csv"), 
+                                             index_col = 0, lineterminator="\r",
+                                             parse_dates = ["publishedAt"])
+            
+            videos = pd.concat([videos, videos_per_channel], axis = 0)
+            
+            print(f'comments and videos concatenated from {channel_path}')
+            
+        except FileNotFoundError:
+            print("Required csv files not found in ... ")
+            print(f"{channel_path}")
         
-        comments = pd.concat([comments, comments_per_channel], axis = 0)
-        
-    
-        # Import all_videos 
-        videos_per_channel = pd.read_csv(channel_path.joinpath("all_videos.csv"), 
-                                            index_col = 0, lineterminator="\r",
-                                            parse_dates = ["publishedAt"])
-        
-        videos = pd.concat([videos,videos_per_channel], axis = 0)
-        
-        print(f'comments and videos concatenated from {channel_path}')
-    
     return comments, videos
+    
 
 # =============================================================================
 # Export and import of datatypes

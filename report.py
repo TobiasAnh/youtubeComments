@@ -3,8 +3,8 @@ import numpy as np
 # from pandas_profiling import ProfileReport
 from datetime import datetime
 import plotly.express as px
-from src.data import storage_path, processed_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
-from src.data import importDFdtypes
+from src.funcs import storage_path, processed_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
+from src.funcs import importDFdtypes
 
 # =============================================================================
 # Load and prepare video data
@@ -23,8 +23,8 @@ comments = comments.astype(importDFdtypes("comments.json"))
 
 # Only videos published before report_deadline are included in report.
 # (to avoid including videos with insufficient time to accumulate comments
-report_deadline = "2022-07-01 00:00:00+00:00"
-report_deadline_short = "Q3"
+report_deadline = "2022-12-31 00:00:00+00:00"
+report_deadline_short = "2022"
 
 # =============================================================================
 # Video Filter: 
@@ -57,7 +57,6 @@ monthly_comments = (comments.query("comment_published < @report_deadline")
 timeseries_comments = px.line(monthly_comments,
                               template = "simple_white")
 
-timeseries_comments.update_layout(px_select_deselect)
 timeseries_comments.write_html(reports_path.joinpath("timeseries_comments.html"))
 
 # =============================================================================
@@ -66,7 +65,7 @@ timeseries_comments.write_html(reports_path.joinpath("timeseries_comments.html")
 # =============================================================================
 
 features = ["toplevel_sentiment_mean", "mod_activity", "responsivity", "ratio_RepliesToplevel",
-            "mean_word_count", "comments_per_author", "removed_comments_perc", "polarity"]
+            "mean_word_count", "comments_per_author", "removed_comments_perc", "toplevel_neutrality"]
 
 for feature in features:
     distributions_allVideos = px.strip(videos_cutoff, 
@@ -189,7 +188,7 @@ for quarter in quarters:
               "removed_comments_perc" : "mean",
               "comments_per_author" : "mean",
               "ratio_RepliesToplevel" : "mean",
-              "polarity": "mean",
+              "toplevel_neutrality": "mean",
               "responsivity" : "mean",
               "toplevel_sentiment_mean": "mean",
             })

@@ -4,8 +4,8 @@ import shutil
 import pandas as pd
 import json
 
-from src.data import first_key, second_key, storage_path, project_path
-from src.data import getChannelMetrics, getVideoIds, getVideoStatistics, getCommentsFromVideos
+from src.funcs import first_key, second_key, storage_path, project_path
+from src.funcs import getChannelMetrics, getVideoIds, getVideoStatistics, getCommentsFromVideos
 
 # =============================================================================
 # Channel Ids overview
@@ -18,8 +18,11 @@ print(channels)
 # Check quota limit here: # https://console.cloud.google.com/apis
 # =============================================================================
 
+if not first_key:
+    print("no API key set")
+
 # Set up channel (load basic metrics and create own subfolder)
-channelId = "UCeaNCdxZcQsNMf8dkIOhLPg"
+channelId = "UCWKEY-aEu7gcv5ayIpgrnvg"
 channel_metrics, channel_foldername = getChannelMetrics(channelId, api_key_selector = first_key)
 channel_path = storage_path.joinpath(channel_foldername)
 channel_path.mkdir(exist_ok = True)
@@ -36,8 +39,9 @@ all_videos = pd.read_csv(channel_path.joinpath("all_videos.csv"),
 all_videos["channel_foldername"] = channel_foldername
 
 # Remove videos with no or disabled comments
-videos_no_comments = all_videos[all_videos["commentCount"].isna()]
-videoIds = list(all_videos.query("commentCount.notnull()").index)
+videoIds = list(all_videos.query("commentCount.notnull()") # NULL when comments are disabled
+                          .query("commentCount != 0")      # 0 comments written (includes also Livestreams)
+                          .index)
 
 # =============================================================================
 # API comment extraction for given videoIds.
@@ -83,17 +87,20 @@ else:
         print("missing_videos.json found, no quotas left, no API Keys left, come back another day ... ")
 
 # =============================================================================
-# If fetch complete, csv files are concatenated into one 
+# If fetch complete (= no missing_videos.json), files are concatenated into one csv 
 # including some augmentation of features from all_videos.csv 
 # =============================================================================
 
-if input('Type "Y" to concatenate csv files in tmp/:') == "Y":
-    video_files = os.listdir(channel_path.joinpath("tmp"))
+if "missing_videos.json" in os.listdir(channel_path):
+    print("Comment concatenation aborted (missing_videos.json still exists)")
     
-    # Concatenate 
+else:
+    video_files = os.listdir(channel_path.joinpath("tmp"))
+        
+        # Concatenate 
     all_comments = pd.DataFrame()
     counter = 0
-    
+
     for file in video_files:
         _ = pd.read_csv(channel_path.joinpath("tmp", file), 
                         index_col = 0, 
@@ -106,40 +113,36 @@ if input('Type "Y" to concatenate csv files in tmp/:') == "Y":
         print(f'Fraction concatenated: {progress}')
         
         counter += 1
-    
+
     # Augment video features
     video_features = all_videos[["Title", "videoOwnerChannelTitle", "publishedAt"]]
     all_comments_aug = pd.merge(left = all_comments, 
                                 right = video_features, 
                                 how = "left", 
                                 on = "videoId")
-    
+
     del all_comments
         
     # Drop unnecessary columns
     all_comments_aug = all_comments_aug.drop(["comment_update"], axis = 1)
-    
+
     # =============================================================================
     # Data export "all_comments_noSentiment.csv" (locally)
     # ... and removing tmp/ folder
     # =============================================================================
-    
+
     last_comment = all_comments_aug["comment_published"].max() # <- latest comment!
     all_comments_aug.info()
     all_comments_aug.to_csv(channel_path.joinpath("all_comments_noSentiment.csv"), lineterminator="\r")
     print(f'all_comments_noSentiment.csv saved | last comment within data ----> {last_comment}')
-    
+
     # -- User input --
-    user_input = (input(f'Comments concatenated ({len(all_comments_aug)} from {len(video_files)} videos). \
-    Insert Y and press ENTER to delete temporary folder >>> '))
-    
+    user_input = (input(f'{channel_foldername} | {len(all_comments_aug)} comments concatenated from {len(video_files)} videos. \
+    Delete subfolder "tmp"? [Y/N]:'))
+
     if user_input == "Y":
         folder = channel_path.joinpath("tmp")
         shutil.rmtree(folder)        
         print("temporary folder deleted.")
     else:
         print("nothing done.")
-else:
-    print("nothing done.")
-
-

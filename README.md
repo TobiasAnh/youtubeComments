@@ -6,20 +6,20 @@ This repo enables to fetch YouTube channel, video and comment infos and associat
 1) YouTube Data API key is required, follow instructions here: 
 https://developers.google.com/youtube/v3/getting-started
 
-2) Local folder structure 
+2) Store API keys file repository/.env as follows ... <br>
+API_KEY_1=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx <br>
+API_KEY_2=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+3) Repository structure 
 ```
-youtubeComments/       <-- pulled repo (set absolute local path as 'project_path' in .env file)
-    .env               <-- create file with entries API_KEY_1, API_KEY_2 and project_path
-    data/              <-- folder and subfolders generated when data.py executes 
-        interim/     
-        processed/   
-        reports/
+youtubeComments/       
+    .env               <-- TODO(!): create file with entries API_KEY_1 and API_KEY_2
     references/         
-        channelIds.csv <-- relevant channelIds can be found here 
+        channelIds.csv <-- relevant channelIds and other infos can be found here 
         ...                    
     src/
         __init__.py
-        data.py        <-- contains various api requests, data transformations, relabelling dictionary, etc.
+        funcs.py       <-- contains various api requests, data transformations, relabelling dictionary, etc.
         ...
     fetch.py
     sentiment_analysis.py
@@ -28,16 +28,31 @@ youtubeComments/       <-- pulled repo (set absolute local path as 'project_path
     ...
 
 ```
+3) Setup and acticate virtual environment and install dependencies 
 
-3) Python libraries
 ```
+python -m venv .venv
+source .venv/bin/acticate
 pip install -r requirements.txt
 ```
+
 # Fetching and analyzing comments 
-Execute files in the following order (further instructions and info can be found within these files)
+Execute files in the following order (further instructions and info can be found within these files). 
 1) fetch.py
 2) sentiment_analysis.py
 3) transform.py
 4) report.py (optional)
 5) wordclouds.py (optional)
+
+When executing fetch.py, data/ folder is genrated. Here, storage of various csv files containing channel, video and comment information 
+
+```
+youtubeComments/       
+    data/
+        interim/    <- each channel gets own subfolder
+        processed/  <- combines all channels 
+        reports/    <- final tables and plotly graphs        
+    ...
+
+```
 
