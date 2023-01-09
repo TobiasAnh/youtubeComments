@@ -22,14 +22,14 @@ if not first_key:
     print("no API key set")
 
 # Set up channel (load basic metrics and create own subfolder)
-channelId = "UCWKEY-aEu7gcv5ayIpgrnvg"
+channelId = "UCeaNCdxZcQsNMf8dkIOhLPg"
 channel_metrics, channel_foldername = getChannelMetrics(channelId, api_key_selector = first_key)
 channel_path = storage_path.joinpath(channel_foldername)
 channel_path.mkdir(exist_ok = True)
 playlistId = channel_metrics.get("playlistId") # this list contains all videos uploaded by the channel owner
-raw_video_info = getVideoIds(playlistId, api_key_selector = first_key)
 
 # Generates "all_videos.csv" within channel folder 
+raw_video_info = getVideoIds(playlistId, api_key_selector = first_key)
 getVideoStatistics(raw_video_info, channel_path, api_key_selector = first_key)
 
 # Import videoIds back from local storage
@@ -38,14 +38,14 @@ all_videos = pd.read_csv(channel_path.joinpath("all_videos.csv"),
                          lineterminator="\r")
 all_videos["channel_foldername"] = channel_foldername
 
+# =============================================================================
+# API comment extraction for given videoIds.
+# =============================================================================
+
 # Remove videos with no or disabled comments
 videoIds = list(all_videos.query("commentCount.notnull()") # NULL when comments are disabled
                           .query("commentCount != 0")      # 0 comments written (includes also Livestreams)
                           .index)
-
-# =============================================================================
-# API comment extraction for given videoIds.
-# =============================================================================
 
 # If final file already exists, do nothing, otherwise start OR continue comment fetch.
 if (
@@ -91,10 +91,8 @@ else:
 # including some augmentation of features from all_videos.csv 
 # =============================================================================
 
-if "missing_videos.json" in os.listdir(channel_path):
-    print("Comment concatenation aborted (missing_videos.json still exists)")
-    
-else:
+if "missing_videos.json" not in os.listdir(channel_path):
+
     video_files = os.listdir(channel_path.joinpath("tmp"))
         
         # Concatenate 
@@ -146,3 +144,6 @@ else:
         print("temporary folder deleted.")
     else:
         print("nothing done.")
+    
+else: 
+    print("Comment concatenation aborted (missing_videos.json still exists)")

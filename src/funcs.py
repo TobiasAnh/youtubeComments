@@ -12,10 +12,10 @@ dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 first_key = os.environ.get("API_KEY_1")
 second_key = os.environ.get("API_KEY_2")
+
+# Define locations for downloads and reports) 
 project_path = Path(os.getcwd())
 
-# Define locations where downloads and reports will be stored
-os.chdir(project_path)
 data_path = project_path.joinpath("data")
 data_path.mkdir(exist_ok=True)
 

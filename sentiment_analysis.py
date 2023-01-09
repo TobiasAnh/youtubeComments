@@ -57,22 +57,20 @@ def sentiment_analysis(channel_path):
     comments_for_sentiment.to_csv(channel_path.joinpath("all_comments_withSentiment.csv"), 
                                   lineterminator="\r")
     
-    # if new csv file exists, delete old one
-    #if "all_comments_withSentiment.csv" in os.listdir(channel_path):
-    #    file = channel_path.joinpath("all_comments_noSentiment.csv")
-    #     os.remove(file)
-    #     print("original csv deleted.")
+    #if new csv file exists, delete old one
+    if "all_comments_withSentiment.csv" in os.listdir(channel_path):
+        file = channel_path.joinpath("all_comments_noSentiment.csv")
+        os.remove(file)
+        print("original csv deleted.")
 
-
-
-channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 
 # Loop through channels 
+channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 for channel_path in channel_paths:
     sentiment_analysis(channel_path)
 
 # Single channel
-channel_path = channel_paths[-4]
+channel_path = channel_paths[-3]
 sentiment_analysis(channel_path)
 
     
