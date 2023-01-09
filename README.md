@@ -28,15 +28,15 @@ youtubeComments/
     ...
 
 ```
-3) Setup and acticate virtual environment and install dependencies 
+4) Setup and activate virtual environment and install dependencies 
 
 ```
 python -m venv .venv
-source .venv/bin/acticate
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-# Fetching and analyzing comments 
+# Workflow fetching and analyzing comments 
 Execute files in the following order (further instructions and info can be found within these files). 
 1) fetch.py
 2) sentiment_analysis.py
