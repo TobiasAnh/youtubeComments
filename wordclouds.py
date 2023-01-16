@@ -3,7 +3,7 @@ import nltk
 import pandas as pd
 from wordcloud import WordCloud
 
-from src.funcs import project_path, storage_path, reports_path
+from src.funcs import project_path, storage_path, reports_path, processed_path
 
 # Gathering and defining stopwords prior to wordcloud creation 
 # Stopwords (common words with no/little meaning)
@@ -22,8 +22,7 @@ for channel_path in channel_paths:
                                        index_col=0,
                                        lineterminator="\r",
                                        parse_dates=["publishedAt", "comment_published"])
-    
-    
+        
     channel_title = selected_comments_df["videoOwnerChannelTitle"][0]
     channel_foldername = channel_title.replace(" ", "_").replace("&", "_")
     
@@ -43,7 +42,7 @@ for channel_path in channel_paths:
                                         margin = 10, 
                                         width = 1024, height = 768).generate(comments_bagOfWords)
         
-        if year == 2022:
+        if year == 2023:
             last_comment = selected_comments_filtered["comment_published"].max().date()
             time_window = f'{year} (bis {last_comment.day-1}.{last_comment.month}.)'
         else:
@@ -57,3 +56,38 @@ for channel_path in channel_paths:
                     dpi = 600)
         
         print(f'{channel_title} | Wordcloud done for {year}')
+        
+        
+# Wordcloud for single channel
+
+selected_comments_df = pd.read_csv(processed_path.joinpath("comments.csv"), 
+                                   index_col=0,
+                                   lineterminator="\r",
+                                   parse_dates=["publishedAt", "comment_published"])
+
+channel_title = selected_comments_df["videoOwnerChannelTitle"][0]
+channel_foldername = channel_title.replace(" ", "_").replace("&", "_")
+    
+
+picked_videoId = "_5yP6rZKf9s"
+selected_comments_filtered = selected_comments_df.query("videoId == @picked_videoId")
+video_title = selected_comments_filtered["Title"].iloc[1]
+video_title_short = video_title[:35]
+comments_for_wordcloud_filtered = selected_comments_filtered["comment_string"]
+comments_bagOfWords = ' '.join(comments_for_wordcloud_filtered.apply(str))
+
+# spaCy
+import spacy 
+
+
+wordcloud_filtered = WordCloud(stopwords = stopwords_combined, 
+                                background_color="white", 
+                                margin = 10, 
+                                width = 1024, height = 768).generate(comments_bagOfWords)
+
+plt.imshow(wordcloud_filtered, interpolation='bilinear')
+plt.suptitle(f'{video_title_short} WordCloud')
+plt.title(f'YT-Kommentare von {time_window}')
+plt.axis("off")
+plt.savefig(reports_path.joinpath(channel_foldername, f'WordCloud_{channel_foldername}_{picked_videoId}.png'),
+            dpi = 600)

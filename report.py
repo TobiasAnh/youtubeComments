@@ -3,7 +3,7 @@ import numpy as np
 # from pandas_profiling import ProfileReport
 from datetime import datetime
 import plotly.express as px
-from src.funcs import storage_path, processed_path, reports_path, relabeling_dict, px_select_deselect, getChannelMetrics
+from src.funcs import processed_path, reports_path, relabeling_dict, px_select_deselect
 from src.funcs import importDFdtypes
 
 # =============================================================================
@@ -16,14 +16,15 @@ videos = pd.read_csv(processed_path.joinpath("videos.csv"),
                      index_col="videoId")
 videos = videos.astype(importDFdtypes("videos.json"))
 
+# Do not use comment_id as index here (replies have same comment_id as the comments they reply to)
 comments = pd.read_csv(processed_path.joinpath("comments.csv"), 
                        lineterminator="\r", 
-                       index_col="comment_id")
+                       index_col=0) 
 comments = comments.astype(importDFdtypes("comments.json"))
 
 # Only videos published before report_deadline are included in report.
 # (to avoid including videos with insufficient time to accumulate comments
-report_deadline = "2022-12-31 00:00:00+00:00"
+report_deadline = "2023-01-01 00:00:00+00:00"
 report_deadline_short = "2022"
 
 # =============================================================================
@@ -36,7 +37,7 @@ min_comments = 50
 videos_cutoff = (videos.query("publishedAt < @report_deadline")
                        .query("available_comments >= @min_comments"))
 
-info_of_used_filter = f'Nur Videos mit min. {min_comments} Kommentaren und vor {report_deadline_short} | {len(videos_cutoff)} von insg. {len(videos)} Videos'
+info_of_used_filter = f'Nur Videos mit min. {min_comments} Kommentaren und bis {report_deadline_short} | {len(videos_cutoff)} von insg. {len(videos)} Videos'
 
 # =============================================================================
 # ProfileReport (only for videos, comments too big!)
@@ -78,7 +79,7 @@ for feature in features:
                                                      feature],
                                        template = "simple_white",
                                        #opacity = 0.5,
-                                       title = f'ZDF YouTube-Videos | {info_of_used_filter})',
+                                       title = f'ZDF YouTube-Videos | {info_of_used_filter}',
                                        labels = relabeling_dict)
     
     #distributions_allVideos.update_layout(px_select_deselect)
@@ -167,7 +168,6 @@ comments["quarter"] = (
 )
 
 # Loop through quarters and aggregate metrics 
-
 quarters = sorted(list(videos_cutoff["quarter"].unique()))
 channels_quarter = pd.DataFrame()
 
@@ -217,22 +217,28 @@ channels_quarter["mod_activity"] = channels_quarter["owner_comment"] / channels_
 channels_quarter = channels_quarter.drop(["video_url", "videoId"], axis = 1).reset_index(drop = True)
 channels_quarter["quarter_cat"] = pd.Categorical(channels_quarter["quarter"], categories=quarters, ordered=True)
 channels_quarter["quarter_cat"] = channels_quarter["quarter_cat"].cat.rename_categories(lambda x: str(x).replace(".", " Q"))
+channels_quarter = channels_quarter.dropna()
 
 # Export table
+channels_quarter = channels_quarter.sort_values(["videoOwnerChannelTitle", "quarter"]).reset_index(drop=True)
 (channels_quarter.rename(columns = relabeling_dict)
-                 .to_csv(quarter_path.joinpath("Quartalszahlen.csv"), 
+                 .to_csv(processed_path.joinpath("Quartalszahlen.csv"), 
                                                lineterminator="\r",
                                                index = False))
 
+channels_quarter["publishedAt"] = channels_quarter["publishedAt"].apply(lambda x: x.tz_localize(None))
+(channels_quarter.rename(columns = relabeling_dict)
+                 .to_excel(quarter_path.joinpath("Quartalszahlen.xlsx"),
+                                                 sheet_name="Quartalszahlen"))
+
 # Quarterly plots (for each feature a single plot)
-min_quarter = 2019.1
-channels_quarter_plot = channels_quarter.query("quarter >= @min_quarter")
+# min_quarter = 2019.1
+# channels_quarter_plot = channels_quarter.query("quarter >= @min_quarter")
 
 features = ["toplevel_sentiment_mean", "responsivity", "mod_activity", "removed_comments_perc"]
 for feature in features:
-    quaterly_metrics = px.line(channels_quarter_plot,  
+    quaterly_metrics = px.line(channels_quarter,  
                                x = "quarter_cat", y = feature,
-                               #category_orders= True, 
                                color = "videoOwnerChannelTitle",
                                hover_data = ["videoCount"], 
                                template = "simple_white",

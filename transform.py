@@ -19,6 +19,10 @@ comments["comments_published_year"] = pd.DatetimeIndex(comments["comment_publish
 comments["response_time"] = (pd.to_datetime(comments["comment_published"]) -
                              pd.to_datetime(comments["publishedAt"]))
 
+comments = comments.reset_index(drop=True)
+
+
+
 # =============================================================================
 # Feature engineering (video)
 # Available and removed comments (in total and in percent)
@@ -155,6 +159,9 @@ videos["responsivity"] = (comments_1st_day / comments_4weeks.groupby("videoId").
 videos["likes_per_1kViews"] = videos["likeCount"] / videos["viewCount"] * 1000
 videos["comments_per_1kViews"] = videos["commentCount"] / videos["viewCount"] * 1000
 
+videos["likes_per_1kViews"] = videos["likes_per_1kViews"].replace([np.inf], np.nan)
+videos["comments_per_1kViews"] = videos["comments_per_1kViews"].replace([np.inf], np.nan)
+
 # =============================================================================
 # Feature engineering (video)
 # Comments per author
@@ -194,7 +201,7 @@ videos["categoryId"].replace(categories_dict, inplace=True)
 
 comments["response_time_sec"] = comments["response_time"].dt.total_seconds()
 comments = comments.drop(columns=["response_time"], axis = 1)
-comments = comments.set_index("comment_id")
+#comments = comments.set_index("comment_id")
 
 videos["removed_comments_perc"] = round(videos["removed_comments_perc"], 1)
 videos["likes_per_1kViews"] = round(videos["likes_per_1kViews"], 1)
@@ -248,19 +255,31 @@ channels_metrics["removed_comments_perc"] = (
 channels = pd.concat([channels, channels_metrics], axis = 1)
 channels = channels.rename(columns = {"video_url":"n_videos"})
 
+
 # =============================================================================
 # Exports
 # DataFrames to csv, dtypes to json
 # =============================================================================
 
 # Channels
-channels.to_csv(processed_path.joinpath("channels.csv"), lineterminator="\r", index="videoOwnerChannelId")
+channels.to_csv(processed_path.joinpath("channels.csv"), lineterminator="\r")
 exportDFdtypes(channels, "channels.json")
 
 # Videos
-videos.to_csv(processed_path.joinpath("videos.csv"), lineterminator="\r", index="videoId")
+videos.to_csv(processed_path.joinpath("videos.csv"), lineterminator="\r")
 exportDFdtypes(videos, "videos.json")
 
 # Comments
-comments.to_csv(processed_path.joinpath("comments.csv"), lineterminator="\r", index="comment_id")
+comments.to_csv(processed_path.joinpath("comments.csv"), lineterminator="\r")
 exportDFdtypes(comments, "comments.json")
+
+## Excel export
+# Make datetime naive (unaware of timezone). Otherwise Excel export does not work
+channels["publishedAt"] = channels["publishedAt"].apply(lambda x: x.tz_localize(None))
+videos["publishedAt"] = videos["publishedAt"].apply(lambda x: x.tz_localize(None))
+channels.to_excel(processed_path.joinpath("Kanäle.xlsx"), 
+                                          sheet_name="Kanal", 
+                                          index_label = True)
+videos.to_excel(processed_path.joinpath("Videos.xlsx"), 
+                                         sheet_name="Video", 
+                                         index_label = True)

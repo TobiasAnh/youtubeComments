@@ -22,7 +22,7 @@ if not first_key:
     print("no API key set")
 
 # Set up channel (load basic metrics and create own subfolder)
-channelId = "UCeaNCdxZcQsNMf8dkIOhLPg"
+channelId = "UCWKEY-aEu7gcv5ayIpgrnvg"
 channel_metrics, channel_foldername = getChannelMetrics(channelId, api_key_selector = first_key)
 channel_path = storage_path.joinpath(channel_foldername)
 channel_path.mkdir(exist_ok = True)
