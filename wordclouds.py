@@ -58,7 +58,7 @@ for channel_path in channel_paths:
         print(f'{channel_title} | Wordcloud done for {year}')
         
         
-# Wordcloud for single channel
+# Wordcloud for single video
 
 selected_comments_df = pd.read_csv(processed_path.joinpath("comments.csv"), 
                                    index_col=0,
@@ -75,10 +75,6 @@ video_title = selected_comments_filtered["Title"].iloc[1]
 video_title_short = video_title[:35]
 comments_for_wordcloud_filtered = selected_comments_filtered["comment_string"]
 comments_bagOfWords = ' '.join(comments_for_wordcloud_filtered.apply(str))
-
-# spaCy
-import spacy 
-
 
 wordcloud_filtered = WordCloud(stopwords = stopwords_combined, 
                                 background_color="white", 

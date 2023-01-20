@@ -21,15 +21,24 @@ print(channels)
 if not first_key:
     print("no API key set")
 
-# Set up channel (load basic metrics and create own subfolder)
-channelId = "UCWKEY-aEu7gcv5ayIpgrnvg"
+# Import Option 1 using a channelId (preferred!) 
+# Loads basic metrics and create own subfolder
+channelId = "UC4zcMHyrT_xyWlgy5WGpFFQ"
 channel_metrics, channel_foldername = getChannelMetrics(channelId, api_key_selector = first_key)
 channel_path = storage_path.joinpath(channel_foldername)
 channel_path.mkdir(exist_ok = True)
 playlistId = channel_metrics.get("playlistId") # this list contains all videos uploaded by the channel owner
 
+# Import Option 2 (using a playlidId)
+# loads basic metrics and create own subfolder
+# playlistId = "PL2QF6_2vxWihUzfhGizc3pB3d0_N49vQG"
+# channel_foldername = "BILD_ViertelNachAcht"
+# channel_path = storage_path.joinpath(channel_foldername)
+# channel_path.mkdir(exist_ok = True)
+
 # Generates "all_videos.csv" within channel folder 
 raw_video_info = getVideoIds(playlistId, api_key_selector = first_key)
+raw_video_info = raw_video_info[~raw_video_info["videoOwnerChannelId"].isna()]
 getVideoStatistics(raw_video_info, channel_path, api_key_selector = first_key)
 
 # Import videoIds back from local storage
