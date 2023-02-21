@@ -31,10 +31,10 @@ playlistId = channel_metrics.get("playlistId") # this list contains all videos u
 
 # Import Option 2 (using a playlidId)
 # loads basic metrics and create own subfolder
-# playlistId = "PL2QF6_2vxWihUzfhGizc3pB3d0_N49vQG"
-# channel_foldername = "BILD_ViertelNachAcht"
-# channel_path = storage_path.joinpath(channel_foldername)
-# channel_path.mkdir(exist_ok = True)
+#playlistId = ""
+#channel_foldername = ""
+#channel_path = storage_path.joinpath(channel_foldername)
+#channel_path.mkdir(exist_ok = True)
 
 # Generates "all_videos.csv" within channel folder 
 raw_video_info = getVideoIds(playlistId, api_key_selector = first_key)
@@ -66,15 +66,12 @@ if (
     print('Comment fetch appears finished')
     
 else:
-    print('--------------------')
-    # Stores only videos where all comment have been extracted
-    # Missing videosIds are dumped in local json file
-    getCommentsFromVideos(videoIds, channel_path, api_key_selector = first_key)
-    
-    # Various reasons may lead to incomplete comment extraxtions and therefore incomplete videos
-    
-    # Sometines comments are simply not fetched (two times seems sufficent)
-    if "missing_videos.json" in os.listdir(channel_path):
+    if "missing_videos.json" not in os.listdir(channel_path):
+        getCommentsFromVideos(videoIds, channel_path, api_key_selector = first_key)
+        
+    else:
+        # Various reasons may lead to incomplete comment extraxtions and therefore incomplete videos
+        # Sometines comments are simply not fetched (two times seems sufficent)
         runs = 2
         for i in range(runs):
             print(f"missing_videos.json found, try {i+1} ... ")
@@ -82,8 +79,8 @@ else:
                 missing_videos = json.load(filepath)
         
             getCommentsFromVideos(missing_videos, channel_path, api_key_selector = first_key)
-
-    # If still missing, most likely no quotas are left. Try with other API key.
+    
+    # If still missing, most likely no quotas are left. Switch to second API key.
     if "missing_videos.json" in os.listdir(channel_path):
         print("missing_videos.json found, try with other API KEY ... ")
         with open(channel_path.joinpath("missing_videos.json"), 'r') as filepath:

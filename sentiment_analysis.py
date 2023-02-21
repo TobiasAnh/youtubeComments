@@ -70,7 +70,6 @@ for channel_path in channel_paths:
     sentiment_analysis(channel_path)
 
 # Single channel
-channel_path = channel_paths[-3]
+channel_path = channel_paths[0]
 sentiment_analysis(channel_path)
 
-    
