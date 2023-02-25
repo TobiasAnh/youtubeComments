@@ -14,9 +14,6 @@ API_KEY_2=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 youtubeComments/       
     .env               <-- TODO(!): create file with entries API_KEY_1 and API_KEY_2
-    references/         
-        channelIds.csv <-- relevant channelIds and other infos can be found here 
-        ...                    
     src/
         __init__.py
         funcs.py       <-- contains various api requests, data transformations, relabelling dictionary, etc.
