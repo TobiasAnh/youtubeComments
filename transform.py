@@ -1,8 +1,10 @@
 import json
 import numpy as np
 import pandas as pd
+import re
 from src.funcs import first_key, project_path, storage_path, processed_path
 from src.funcs import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
+from src.funcs import findZDFurl
 
 # =============================================================================
 # Data import of csv files (the ones generated in interim/@channel)
@@ -60,6 +62,26 @@ moderation_activity["mod_activity"] = (
 moderation_activity = moderation_activity.set_index("videoId")
 
 videos = videos.join(moderation_activity["mod_activity"]) 
+
+# =============================================================================
+# Feature engineering (videos)
+# Find ZDF content references from channel owners
+# =============================================================================
+
+comments["ZDF_content_reference"] = np.logical_and(comments["comment_string"].apply(findZDFurl), 
+                                                   comments["owner_comment"])
+
+
+#comments_with_zdf_content_ref = comments.query("ZDF_content_reference == True")
+#videos_with_ZDF_content_reference = list(comments_with_zdf_content_ref["videoId"].unique())
+#videos["ZDF_content_reference"] = videos.index.isin(videos_with_ZDF_content_reference)
+
+ZDF_content_references = comments.query("ZDF_content_reference == True").groupby("videoId").size()
+ZDF_content_references.name = "ZDF_content_references"
+videos = videos.join(ZDF_content_references)
+
+
+
 # =============================================================================
 # Feature engineering (video)
 # Ratio: Replies over top_level_user_comments
@@ -242,7 +264,8 @@ agg_dict = {
       "mod_activity": "mean",
       "responsivity" : "mean",
       "toplevel_sentiment_mean": "mean", # Note: simple average here, no weights
-      "ratio_RepliesToplevel" : "mean"
+      "ratio_RepliesToplevel" : "mean",
+      "ZDF_content_references" : "sum"
 }
 channels_metrics = videos.groupby("videoOwnerChannelId").agg(agg_dict)
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import json
+import re
 import pandas as pd
 from pathlib import Path
 from dotenv import load_dotenv, find_dotenv
@@ -374,7 +375,33 @@ def concatCommentsAndVideos(channel_paths):
             print(f"{channel_path}")
         
     return comments, videos
+
+
+
+def findZDFurl(string):
+
+    #TODO add description
     
+    string = str(string).lower()
+    
+    # regex url detection    
+    regex = r"((?<=[^a-zA-Z0-9])(?:https?\:\/\/|[a-zA-Z0-9]{1,}\.{1}|\b)(?:\w{1,}\.{1}){1,5}(?:com|org|edu|gov|uk|net|ca|de|jp|fr|au|us|ru|ch|it|nl|se|no|es|mil|iq|io|ac|ly|sm){1}(?:\/[a-zA-Z0-9]{1,})*)"
+    url = re.findall(regex, string)
+    
+    # return True when url references to ZDF (but not to the service section)
+    if len(url) == 0:    
+        return False # no url at all 
+    else:
+        if str(url).find("zdf") != -1: 
+            if str(url).find("service") != -1: # zdf url but reference to service site (netiquette)
+                return False
+            else:
+                return True # zdf url 
+        else:
+            return False # url but not ZDF
+            
+    
+
 
 # =============================================================================
 # Export and import of datatypes
@@ -441,6 +468,7 @@ relabeling_dict = {
                    "comments_per_1kViews": "Kommentare pro 1000 Views",
                    "categoryId" : "YouTube Kategorie",
                    "ratio_RepliesToplevel":"Reply Intensität (Reply / Toplevel Kommentare)"
+                   "ZDF_content_references":"ZDFmediatheks Verweise"
                   }
             
 # =============================================================================

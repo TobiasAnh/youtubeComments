@@ -191,6 +191,7 @@ for quarter in quarters:
               "toplevel_neutrality": "mean",
               "responsivity" : "mean",
               "toplevel_sentiment_mean": "mean",
+              "ZDF_content_references": "sum"
             })
     ).reset_index()
 
@@ -214,6 +215,7 @@ for quarter in quarters:
 channels_quarter["videoCount"] = channels_quarter["video_url"]
 channels_quarter["commentCount"] = channels_quarter["videoId"]
 channels_quarter["mod_activity"] = channels_quarter["owner_comment"] / channels_quarter["available_comments"] * 1000
+channels_quarter["references_per_video"] = channels_quarter["ZDF_content_references"] / channels_quarter["videoCount"]
 channels_quarter = channels_quarter.drop(["video_url", "videoId"], axis = 1).reset_index(drop = True)
 channels_quarter["quarter_cat"] = pd.Categorical(channels_quarter["quarter"], categories=quarters, ordered=True)
 channels_quarter["quarter_cat"] = channels_quarter["quarter_cat"].cat.rename_categories(lambda x: str(x).replace(".", " Q"))
@@ -235,19 +237,22 @@ channels_quarter["publishedAt"] = channels_quarter["publishedAt"].apply(lambda x
 # min_quarter = 2019.1
 # channels_quarter_plot = channels_quarter.query("quarter >= @min_quarter")
 
-features = ["toplevel_sentiment_mean", "responsivity", "mod_activity", "removed_comments_perc"]
+features = ["toplevel_sentiment_mean", "responsivity", "mod_activity", "removed_comments_perc", "references_per_video"]
 for feature in features:
-    quaterly_metrics = px.line(channels_quarter,  
-                               x = "quarter_cat", y = feature,
+    quaterly_metrics = px.line(channels_quarter.sort_values(["quarter"]),  
+                               x = "quarter_cat", y = feature, 
                                color = "videoOwnerChannelTitle",
                                hover_data = ["videoCount"], 
                                template = "simple_white",
                                #opacity = 0.8,
                                markers = True,
-                               title = f'ZDF YT-Videos | {relabeling_dict.get(feature)} (Quartalsmittelwerte)',
+                               title = f'ZDF YT-Videos | {relabeling_dict.get(feature)} (Quartalswerte)',
                                labels = relabeling_dict)
 
     quaterly_metrics.update_layout(px_select_deselect)
     quaterly_metrics.update_xaxes(title = None)
     file_name = f"Quartalsverlauf_{relabeling_dict.get(feature).replace(' ','_')}.html"
+    quaterly_metrics.update_xaxes(type='category')
     quaterly_metrics.write_html(quarter_path.joinpath(file_name))
+    
+channels_quarter["quarter_cat"]
