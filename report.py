@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-# from pandas_profiling import ProfileReport
+from pandas_profiling import ProfileReport
 from datetime import datetime
 import plotly.express as px
 from src.funcs import processed_path, reports_path, relabeling_dict, px_select_deselect
@@ -37,14 +37,14 @@ min_comments = 50
 videos_cutoff = (videos.query("publishedAt < @report_deadline")
                        .query("available_comments >= @min_comments"))
 
-info_of_used_filter = f'Nur Videos mit min. {min_comments} Kommentaren und bis {report_deadline_short} | {len(videos_cutoff)} von insg. {len(videos)} Videos'
+info_of_used_filter = f'Nur Videos mit min. {min_comments} Kommentaren und bis einschl. {report_deadline_short} | {len(videos_cutoff)} von insg. {len(videos)} Videos'
 
 # =============================================================================
 # ProfileReport (only for videos, comments too big!)
 # =============================================================================
 
-# profile = ProfileReport(videos_cutoff, title="Pandas Profiling Report")
-# profile.to_file(reports_path.joinpath("videos_report.html"))
+#profile = ProfileReport(videos_cutoff, title="Pandas Profiling Report")
+#profile.to_file(reports_path.joinpath("videos_report.html"))
 
 # =============================================================================
 # Time series of comment amount 
@@ -66,7 +66,8 @@ timeseries_comments.write_html(reports_path.joinpath("timeseries_comments.html")
 # =============================================================================
 
 features = ["toplevel_sentiment_mean", "mod_activity", "responsivity", "ratio_RepliesToplevel",
-            "mean_word_count", "comments_per_author", "removed_comments_perc", "toplevel_neutrality"]
+            "mean_word_count", "comments_per_author", "removed_comments_perc", "toplevel_neutrality",
+            "ZDF_content_references"]
 
 for feature in features:
     distributions_allVideos = px.strip(videos_cutoff, 
@@ -98,7 +99,7 @@ video_features = [#"likes_per_1kViews",
                   #"responsivity", 
                   #"viewCount",
                   #"toplevel_sentiment_mean",
-                  "polarity",
+                  "toplevel_neutrality",
                   "comments_per_author"]
 
 splom = px.scatter_matrix(videos_cutoff,
@@ -116,7 +117,7 @@ splom.write_html(reports_path.joinpath("SPLOM.html"))
 # Relationship between performance and sentiment-index?
 r_squared_matrix_all = (videos_cutoff.corr(numeric_only= True)**2)
 r_squared_matrix = (videos_cutoff[video_features].corr(numeric_only=True)**2)
-round(r_squared_matrix["polarity"], 2)
+round(r_squared_matrix["toplevel_neutrality"], 2)
 
 
 
@@ -254,5 +255,3 @@ for feature in features:
     file_name = f"Quartalsverlauf_{relabeling_dict.get(feature).replace(' ','_')}.html"
     quaterly_metrics.update_xaxes(type='category')
     quaterly_metrics.write_html(quarter_path.joinpath(file_name))
-    
-channels_quarter["quarter_cat"]
