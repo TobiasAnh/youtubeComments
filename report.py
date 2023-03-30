@@ -29,15 +29,13 @@ report_deadline_short = "2022"
 
 # =============================================================================
 # Video Filter: 
-# 1) Minimum comments 
-# 2) only comments before report_deadline
+# 1) only comments before report_deadline
 # =============================================================================
 
-min_comments = 50
-videos_cutoff = (videos.query("publishedAt < @report_deadline")
-                       .query("available_comments >= @min_comments"))
+videos.query("available_comments < 50").groupby("videoOwnerChannelTitle").size().sum()
 
-info_of_used_filter = f'Nur Videos mit min. {min_comments} Kommentaren und bis einschl. {report_deadline_short} | {len(videos_cutoff)} von insg. {len(videos)} Videos'
+videos_cutoff = videos.query("publishedAt < @report_deadline")
+info_of_used_filter = f'Videos und Kommentare und bis einschl. {report_deadline_short} ({len(videos_cutoff)} Videos und {len(comments)} Kommentare)'
 
 # =============================================================================
 # ProfileReport (only for videos, comments too big!)
@@ -65,7 +63,7 @@ timeseries_comments.write_html(reports_path.joinpath("timeseries_comments.html")
 # NOTE: can also be splitted by category
 # =============================================================================
 
-features = ["toplevel_sentiment_mean", "mod_activity", "responsivity", "ratio_RepliesToplevel",
+features = ["available_comments", "toplevel_sentiment_mean", "mod_activity", "responsivity", "ratio_RepliesToplevel",
             "mean_word_count", "comments_per_author", "removed_comments_perc", "toplevel_neutrality",
             "ZDF_content_references"]
 
@@ -86,7 +84,9 @@ for feature in features:
     #distributions_allVideos.update_layout(px_select_deselect)
     #distributions_allVideos.update_layout(xaxis={'range': [0, 1]})
     
-    distributions_allVideos.write_html(reports_path.joinpath(f"Verteilung_{feature}.html"))
+    distributions_allVideos.write_html(
+        reports_path.joinpath(f"Verteilung_{relabeling_dict.get(feature).replace(' ','_')}.html")
+        )
 
 # =============================================================================
 # SPLOM: Scatter Plot Matrix 
@@ -220,7 +220,7 @@ channels_quarter["references_per_video"] = channels_quarter["ZDF_content_referen
 channels_quarter = channels_quarter.drop(["video_url", "videoId"], axis = 1).reset_index(drop = True)
 channels_quarter["quarter_cat"] = pd.Categorical(channels_quarter["quarter"], categories=quarters, ordered=True)
 channels_quarter["quarter_cat"] = channels_quarter["quarter_cat"].cat.rename_categories(lambda x: str(x).replace(".", " Q"))
-channels_quarter = channels_quarter.dropna()
+#channels_quarter = channels_quarter.dropna()
 
 # Export table
 channels_quarter = channels_quarter.sort_values(["videoOwnerChannelTitle", "quarter"]).reset_index(drop=True)
@@ -238,7 +238,14 @@ channels_quarter["publishedAt"] = channels_quarter["publishedAt"].apply(lambda x
 # min_quarter = 2019.1
 # channels_quarter_plot = channels_quarter.query("quarter >= @min_quarter")
 
-features = ["toplevel_sentiment_mean", "responsivity", "mod_activity", "removed_comments_perc", "references_per_video"]
+features = [
+    "available_comments",
+    "toplevel_sentiment_mean", 
+    "responsivity", 
+    "mod_activity", 
+    "removed_comments_perc", 
+    "references_per_video"]
+
 for feature in features:
     quaterly_metrics = px.line(channels_quarter.sort_values(["quarter"]),  
                                x = "quarter_cat", y = feature, 
@@ -255,3 +262,10 @@ for feature in features:
     file_name = f"Quartalsverlauf_{relabeling_dict.get(feature).replace(' ','_')}.html"
     quaterly_metrics.update_xaxes(type='category')
     quaterly_metrics.write_html(quarter_path.joinpath(file_name))
+
+# TODO remove if issues with Lars hasd been clarified (March 27 2023)
+# (videos_cutoff
+#  .query("videoOwnerChannelTitle == 'Terra X Lesch & Co'")
+#  .query("quarter == 2021.4")
+#  .sort_values("ZDF_content_references", ascending=False)
+#  )[["ZDF_content_references"]]
