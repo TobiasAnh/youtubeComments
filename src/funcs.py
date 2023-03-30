@@ -467,9 +467,10 @@ relabeling_dict = {
                    "removed_comments" : "gelöschte Kommentare",
                    "comments_per_1kViews": "Kommentare pro 1000 Views",
                    "categoryId" : "YouTube Kategorie",
-                   "ratio_RepliesToplevel":"Reply Intensität (Reply / Toplevel Kommentare)",
+                   "ratio_RepliesToplevel":"Reply Intensität (Reply vs Toplevel Kommentare)",
                    "ZDF_content_references":"ZDFmediatheks Verweise",
-                   "references_per_video":"ZDFmediatheks Verweise pro Video"
+                   "references_per_video":"ZDFmediatheks Verweise pro Video",
+                   "toplevel_neutrality":"Neutralität"
                   }
             
 # =============================================================================
