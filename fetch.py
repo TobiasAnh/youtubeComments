@@ -23,10 +23,10 @@ if not first_key:
 
 # Import Option 1 using a channelId (preferred!) 
 # Loads basic metrics and create own subfolder
-channelId = "UC4zcMHyrT_xyWlgy5WGpFFQ"
+channelId = "UCa5Tb6hVZbNuD0iTnYpJdeg"
 channel_metrics, channel_foldername = getChannelMetrics(channelId, api_key_selector = first_key)
 channel_path = storage_path.joinpath(channel_foldername)
-channel_path.mkdir(exist_ok = True)
+channel_path.mkdir(exist_ok = True, parents=True)
 playlistId = channel_metrics.get("playlistId") # this list contains all videos uploaded by the channel owner
 
 # Import Option 2 (using a playlidId)

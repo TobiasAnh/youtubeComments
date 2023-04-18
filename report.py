@@ -154,7 +154,7 @@ for channel in sentiment_vs_popularity["videoOwnerChannelTitle"].unique():
 
 # Generate new path for quarterly reports 
 quarter_path = reports_path.joinpath("Quartalszahlen")
-quarter_path.mkdir(exist_ok = True)
+quarter_path.mkdir(exist_ok = True, parents=True)
 
 # Augment quarter (as float .1 = Q1, .2 = Q2, etc.)
 videos_cutoff["quarter"] = (
@@ -262,10 +262,3 @@ for feature in features:
     file_name = f"Quartalsverlauf_{relabeling_dict.get(feature).replace(' ','_')}.html"
     quaterly_metrics.update_xaxes(type='category')
     quaterly_metrics.write_html(quarter_path.joinpath(file_name))
-
-# TODO remove if issues with Lars hasd been clarified (March 27 2023)
-# (videos_cutoff
-#  .query("videoOwnerChannelTitle == 'Terra X Lesch & Co'")
-#  .query("quarter == 2021.4")
-#  .sort_values("ZDF_content_references", ascending=False)
-#  )[["ZDF_content_references"]]

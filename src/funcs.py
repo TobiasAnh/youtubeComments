@@ -18,16 +18,16 @@ second_key = os.environ.get("API_KEY_2")
 project_path = Path(os.getcwd())
 
 data_path = project_path.joinpath("data")
-data_path.mkdir(exist_ok=True)
+data_path.mkdir(exist_ok=True, parents=True)
 
 storage_path = data_path.joinpath("interim")
-storage_path.mkdir(exist_ok=True)
+storage_path.mkdir(exist_ok=True, parents=True)
 
 processed_path = data_path.joinpath("processed")
-processed_path.mkdir(exist_ok=True)
+processed_path.mkdir(exist_ok=True, parents=True)
 
 reports_path = data_path.joinpath("reports") 
-reports_path.mkdir(exist_ok = True)
+reports_path.mkdir(exist_ok = True, parents=True)
 
 # Functions for YouTube API requests
 def setupYouTube(api_key_selector):
