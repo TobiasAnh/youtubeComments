@@ -24,8 +24,8 @@ comments = comments.astype(importDFdtypes("comments.json"))
 
 # Only videos published before report_deadline are included in report.
 # (to avoid including videos with insufficient time to accumulate comments
-report_deadline = "2023-01-01 00:00:00+00:00"
-report_deadline_short = "2022"
+report_deadline = "2023-04-01 00:00:00+00:00"
+report_deadline_short = "Q1 2023"
 
 # =============================================================================
 # Video Filter: 
@@ -48,7 +48,7 @@ info_of_used_filter = f'Videos und Kommentare und bis einschl. {report_deadline_
 # Time series of comment amount 
 # =============================================================================
 
-frequency = "W" # choose frequency D, W, M, Q
+frequency = "M" # choose frequency D, W, M, Q
 monthly_comments = (comments.query("comment_published < @report_deadline")
                             .groupby(pd.Grouper(key = "comment_published", freq=frequency))
                             .size())
@@ -68,7 +68,7 @@ features = ["available_comments", "toplevel_sentiment_mean", "mod_activity", "re
             "ZDF_content_references"]
 
 for feature in features:
-    distributions_allVideos = px.strip(videos_cutoff, 
+    distributions_allVideos = px.strip(videos_cutoff.query("available_comments >= 50"), 
                                        x = feature, y = "videoOwnerChannelTitle",
                                        color = "videoOwnerChannelTitle",
                                        hover_data = ["publishedAt",
@@ -93,21 +93,24 @@ for feature in features:
 # =============================================================================
 
 splom_title = f'Scatterplot Matrix verschiedener YT-Video Eigenschaften | {info_of_used_filter})'
-video_features = [#"likes_per_1kViews", 
-                  #"mod_activity",
-                  "ratio_RepliesToplevel", 
-                  #"responsivity", 
-                  #"viewCount",
-                  #"toplevel_sentiment_mean",
-                  "toplevel_neutrality",
-                  "comments_per_author"]
+video_features = [
+    "likes_per_1kViews", 
+    #"mod_activity",
+    "ratio_RepliesToplevel", 
+    #"responsivity", 
+    #"viewCount",
+    "toplevel_sentiment_mean",
+    #"toplevel_neutrality",
+    #"comments_per_author",
+    "removed_comments_perc"
+]
 
 splom = px.scatter_matrix(videos_cutoff,
                           dimensions = video_features,
-                          #color = "videoOwnerChannelTitle",
+                          color = "videoOwnerChannelTitle",
                           hover_data= ["Title"],
                           template = "simple_white",
-                          opacity = 0.2,
+                          opacity = 0.4,
                           title = splom_title,
                           labels = relabeling_dict)
 
@@ -117,7 +120,7 @@ splom.write_html(reports_path.joinpath("SPLOM.html"))
 # Relationship between performance and sentiment-index?
 r_squared_matrix_all = (videos_cutoff.corr(numeric_only= True)**2)
 r_squared_matrix = (videos_cutoff[video_features].corr(numeric_only=True)**2)
-round(r_squared_matrix["toplevel_neutrality"], 2)
+round(r_squared_matrix["likes_per_1kViews"], 2)
 
 
 
@@ -220,7 +223,7 @@ channels_quarter["references_per_video"] = channels_quarter["ZDF_content_referen
 channels_quarter = channels_quarter.drop(["video_url", "videoId"], axis = 1).reset_index(drop = True)
 channels_quarter["quarter_cat"] = pd.Categorical(channels_quarter["quarter"], categories=quarters, ordered=True)
 channels_quarter["quarter_cat"] = channels_quarter["quarter_cat"].cat.rename_categories(lambda x: str(x).replace(".", " Q"))
-#channels_quarter = channels_quarter.dropna()
+channels_quarter = channels_quarter.dropna()
 
 # Export table
 channels_quarter = channels_quarter.sort_values(["videoOwnerChannelTitle", "quarter"]).reset_index(drop=True)
@@ -244,11 +247,13 @@ features = [
     "responsivity", 
     "mod_activity", 
     "removed_comments_perc", 
-    "references_per_video"]
+    "references_per_video"
+    ]
 
 for feature in features:
-    quaterly_metrics = px.line(channels_quarter.sort_values(["quarter"]),  
+    quaterly_metrics = px.line(channels_quarter,  
                                x = "quarter_cat", y = feature, 
+                               category_orders={"quarter_cat": channels_quarter["quarter_cat"].cat.categories},
                                color = "videoOwnerChannelTitle",
                                hover_data = ["videoCount"], 
                                template = "simple_white",
@@ -260,5 +265,5 @@ for feature in features:
     quaterly_metrics.update_layout(px_select_deselect)
     quaterly_metrics.update_xaxes(title = None)
     file_name = f"Quartalsverlauf_{relabeling_dict.get(feature).replace(' ','_')}.html"
-    quaterly_metrics.update_xaxes(type='category')
+    #quaterly_metrics.update_xaxes(type='category')
     quaterly_metrics.write_html(quarter_path.joinpath(file_name))

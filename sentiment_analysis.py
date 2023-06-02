@@ -63,13 +63,13 @@ def sentiment_analysis(channel_path):
         os.remove(file)
         print("original csv deleted.")
 
+channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 
 # Loop through channels 
-channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
 for channel_path in channel_paths:
     sentiment_analysis(channel_path)
 
 # Single channel
-channel_path = channel_paths[0]
+channel_path = channel_paths[-6]
 sentiment_analysis(channel_path)
 
