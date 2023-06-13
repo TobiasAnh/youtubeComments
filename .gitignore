@@ -1,4 +1,5 @@
 # Individual ignores
+references/
 report_singleChannel.py
 update.py
 data/
