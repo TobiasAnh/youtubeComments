@@ -1,18 +1,20 @@
 import json
 import numpy as np
 import pandas as pd
-import re
-from src.funcs import first_key, project_path, storage_path, processed_path
-from src.funcs import concatCommentsAndVideos, getChannelMetrics, exportDFdtypes
+import os
+from pathlib import Path
+from src.funcs import generateSubfolders
+from src.funcs import concatCommentsAndVideos, exportDFdtypes
 from src.funcs import findZDFurl
 
 # =============================================================================
 # Data import of csv files (the ones generated in interim/@channel)
 # =============================================================================
+interim_path, processed_path, reports_path = generateSubfolders()
 
-channel_paths = [x for x in storage_path.iterdir() if x.is_dir()]
+channel_paths = [x for x in interim_path.iterdir() if x.is_dir()]
 print(f'found {len(channel_paths)} folders / channels.')
-comments, videos = concatCommentsAndVideos(channel_paths)
+channels, comments, videos = concatCommentsAndVideos(channel_paths)
 
 # Assign / create features
 comments["owner_comment"] = comments["comment_author"] == comments["videoOwnerChannelTitle"]
@@ -60,7 +62,6 @@ moderation_activity["mod_activity"] = (
 )
 
 moderation_activity = moderation_activity.set_index("videoId")
-
 videos = videos.join(moderation_activity["mod_activity"]) 
 
 # =============================================================================
@@ -71,16 +72,9 @@ videos = videos.join(moderation_activity["mod_activity"])
 comments["ZDF_content_reference"] = np.logical_and(comments["comment_string"].apply(findZDFurl), 
                                                    comments["owner_comment"])
 
-
-#comments_with_zdf_content_ref = comments.query("ZDF_content_reference == True")
-#videos_with_ZDF_content_reference = list(comments_with_zdf_content_ref["videoId"].unique())
-#videos["ZDF_content_reference"] = videos.index.isin(videos_with_ZDF_content_reference)
-
 ZDF_content_references = comments.query("ZDF_content_reference == True").groupby("videoId").size()
 ZDF_content_references.name = "ZDF_content_references"
 videos = videos.join(ZDF_content_references)
-
-
 
 # =============================================================================
 # Feature engineering (video)
@@ -104,7 +98,6 @@ videos["ratio_RepliesToplevel"] = (videos["n_user_replies"] /
 # Feature engineering (video)
 # Neutrality (derived from sentiment) 
 # =============================================================================
-
 sentiment_proportions = (user_comments
                         .query("top_level_comment == True")
                         .groupby(["videoId", "prediction"]).size().reset_index())
@@ -206,12 +199,7 @@ videos["video_url"] =  URL_PREFIX + videos.index
 # Convert YT categories
 # =============================================================================
 
-# Categories can be fetched from the API as well
-# id_dict = dict()
-# for item in response["items"]:
-#     id_dict.update({item["id"]: item["snippet"]["title"]})
-
-with open(project_path.joinpath("references", "youtube_categories.json"), 'r') as filepath:
+with open(Path(os.getcwd()).joinpath("references", "youtube_categories.json"), 'r') as filepath:
     categories_dict = json.load(filepath)
 
 videos["categoryId"] = videos["categoryId"].apply(str)
@@ -223,7 +211,6 @@ videos["categoryId"].replace(categories_dict, inplace=True)
 
 comments["response_time_sec"] = comments["response_time"].dt.total_seconds()
 comments = comments.drop(columns=["response_time"], axis = 1)
-#comments = comments.set_index("comment_id")
 
 videos["removed_comments_perc"] = round(videos["removed_comments_perc"], 1)
 videos["likes_per_1kViews"] = round(videos["likes_per_1kViews"], 1)
@@ -239,15 +226,6 @@ videos = videos.astype(convert_dict)
 # =============================================================================
 # Channel-wide features
 # =============================================================================
-
-# Get basic metrics
-channelIds = list(videos["videoOwnerChannelId"].unique())
-channels = pd.DataFrame()
-
-for channelId in channelIds:
-    _ = getChannelMetrics(channelId, first_key)[0]
-    _ = pd.DataFrame.from_dict(_, orient = "index").T
-    channels = pd.concat([channels, _], axis = 0)
 
 channels = channels.set_index("channelId")
 
@@ -278,7 +256,6 @@ channels_metrics["removed_comments_perc"] = (
 channels = pd.concat([channels, channels_metrics], axis = 1)
 channels = channels.rename(columns = {"video_url":"n_videos"})
 
-
 # =============================================================================
 # Exports
 # DataFrames to csv, dtypes to json
@@ -286,23 +263,23 @@ channels = channels.rename(columns = {"video_url":"n_videos"})
 
 # Channels
 channels.to_csv(processed_path.joinpath("channels.csv"), lineterminator="\r")
-exportDFdtypes(channels, "channels.json")
+exportDFdtypes(channels, processed_path, "channels.json")
 
 # Videos
 videos.to_csv(processed_path.joinpath("videos.csv"), lineterminator="\r")
-exportDFdtypes(videos, "videos.json")
+exportDFdtypes(videos, processed_path, "videos.json")
 
 # Comments
 comments.to_csv(processed_path.joinpath("comments.csv"), lineterminator="\r")
-exportDFdtypes(comments, "comments.json")
+exportDFdtypes(comments, processed_path, "comments.json")
 
 ## Excel export
 # Make datetime naive (unaware of timezone). Otherwise Excel export does not work
-channels["publishedAt"] = channels["publishedAt"].apply(lambda x: x.tz_localize(None))
-videos["publishedAt"] = videos["publishedAt"].apply(lambda x: x.tz_localize(None))
 channels.to_excel(processed_path.joinpath("Kanäle.xlsx"), 
                                           sheet_name="Kanal", 
                                           index_label = True)
+
+videos["publishedAt"].apply(str)
 videos.to_excel(processed_path.joinpath("Videos.xlsx"), 
                                          sheet_name="Video", 
                                          index_label = True)

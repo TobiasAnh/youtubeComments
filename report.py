@@ -3,24 +3,27 @@ import numpy as np
 from pandas_profiling import ProfileReport
 from datetime import datetime
 import plotly.express as px
-from src.funcs import processed_path, reports_path, relabeling_dict, px_select_deselect
+from src.funcs import generateSubfolders
+from src.funcs import relabeling_dict, px_select_deselect
 from src.funcs import importDFdtypes
 
 # =============================================================================
 # Load and prepare video data
 # =============================================================================
 
+interim_path, processed_path, reports_path = generateSubfolders()
+
 # Import csv and assign correct dtypes (both videos and comments)
 videos = pd.read_csv(processed_path.joinpath("videos.csv"), 
                      lineterminator="\r", 
                      index_col="videoId")
-videos = videos.astype(importDFdtypes("videos.json"))
+videos = videos.astype(importDFdtypes(processed_path, "videos.json"))
 
 # Do not use comment_id as index here (replies have same comment_id as the comments they reply to)
 comments = pd.read_csv(processed_path.joinpath("comments.csv"), 
                        lineterminator="\r", 
                        index_col=0) 
-comments = comments.astype(importDFdtypes("comments.json"))
+comments = comments.astype(importDFdtypes(processed_path, "comments.json"))
 
 # Only videos published before report_deadline are included in report.
 # (to avoid including videos with insufficient time to accumulate comments
@@ -33,7 +36,6 @@ report_deadline_short = "Q1 2023"
 # =============================================================================
 
 videos.query("available_comments < 50").groupby("videoOwnerChannelTitle").size().sum()
-
 videos_cutoff = videos.query("publishedAt < @report_deadline")
 info_of_used_filter = f'Videos und Kommentare und bis einschl. {report_deadline_short} ({len(videos_cutoff)} Videos und {len(comments)} Kommentare)'
 
@@ -121,8 +123,6 @@ splom.write_html(reports_path.joinpath("SPLOM.html"))
 r_squared_matrix_all = (videos_cutoff.corr(numeric_only= True)**2)
 r_squared_matrix = (videos_cutoff[video_features].corr(numeric_only=True)**2)
 round(r_squared_matrix["likes_per_1kViews"], 2)
-
-
 
 # =============================================================================
 # Single SCATTER PLOT

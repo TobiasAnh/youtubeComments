@@ -3,7 +3,7 @@ references/
 report_singleChannel.py
 update.py
 data/
-
+.vscode/
 *.bkp
 *.dtmp
 

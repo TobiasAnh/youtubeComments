@@ -1,19 +1,35 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+
+
+def testAndGenerateInstance(developerKey: str):
+    """
+    Execute a test API request and return instance when succesful
+
+    Parameter:
+        developerKey: valid API key
+    Returns:
+        youtube request instance
+    """
+    youtube = build(serviceName="youtube", version="v3", developerKey=developerKey)
+    testVideoId = "jNQXAC9IVRw"  # oldest YT video (just for testing purposes)
+    channels_list_response = (
+        youtube.videos().list(part="snippet", id=testVideoId).execute()
+    )
+    if "items" in channels_list_response:
+        print("API key functional!")
+        return youtube
 
 
 # Functions for YouTube API requests
 def setupYouTube():
     """
-    Build YouTube instance (Version 3) with account-related API key.
-    Requires API key stored in .env file
+    Test and returns a YouTube instance (Version 3) by trying two API keys.
+    Requires API keys stored in .env file in repository
 
-            Parameters:
-                None.
-            Return:
-                youtube (googleapiclient.discovery.Resource): youtube request instance
+    Return:
+        youtube (googleapiclient.discovery.Resource): youtube request instance
     """
 
     # load .env entries as environment variables
@@ -23,33 +39,13 @@ def setupYouTube():
     first_key = os.environ.get("API_KEY_1")
     second_key = os.environ.get("API_KEY_2")
 
+    # Execute a API request for testing
     try:
-        youtube = build(serviceName="youtube", version="v3", developerKey=first_key)
-        channels_list_response = (
-            youtube.videos().list(part="snippet", id="jNQXAC9IVRw").execute()
-        )
+        return testAndGenerateInstance(first_key)
 
-        # Check if the request was successful
-        if "items" in channels_list_response:
-            print("Connection successful (API key 1)")
-            return youtube
-
+    # If first API requests fails, switch to second API key
     except Exception as e:
         print(e)
-        print("Trying API Key 2")
+        print("Trying another API Key")
 
-        try:
-            youtube = build(
-                serviceName="youtube", version="v3", developerKey=second_key
-            )
-            channels_list_response = (
-                youtube.videos().list(part="snippet", id="jNQXAC9IVRw").execute()
-            )
-
-            # Check if the request was successful
-            if "items" in channels_list_response:
-                print("Connection successful (API key 2)")
-                return youtube
-
-        except Exception as e:
-            print(e)
+        return testAndGenerateInstance(second_key)
