@@ -10,14 +10,14 @@ from datetime import datetime
 import time
 from src.api import setupYouTube
 
+
 def generateSubfolders():
     """
     Generates subfolder structure user later for storage of data, mostly .csv files
-    
+
         Return: Paths of interim, processed and reports
     """
-    
-    
+
     project_path = Path(os.getcwd())
 
     # data path
@@ -31,8 +31,9 @@ def generateSubfolders():
 
     for subfolder in ["interim", "processed", "reports"]:
         data_path.joinpath(subfolder).mkdir(exist_ok=True, parents=True)
-        
+
     return interim_path, processed_path, reports_path
+
 
 class ytChannel:
     def __init__(self, channelId: str):
@@ -49,31 +50,33 @@ class ytChannel:
 
             # Request channel infos and stores as attributes
             youtube = setupYouTube()
-            channel_request = youtube.channels().list(
-                part="snippet, statistics, contentDetails", id=channelId
-            )
+            channel_request = youtube.channels().list(part="snippet, statistics, contentDetails", id=channelId)
             channel_response = channel_request.execute()
             channel_items = channel_response["items"][0]
-            
+
             info["channelTitle"] = channel_items["snippet"]["title"]
             info["publishedAt"] = channel_items["snippet"]["publishedAt"]
             info["playlistId"] = channel_items["contentDetails"]["relatedPlaylists"]["uploads"]
             info["channel_foldername"] = info["channelTitle"].replace(" ", "_").replace("&", "")
             info.update(channel_items["statistics"])
-            
+
             self.info = info
             print(f"Loaded YT Channel: {self.info['channelTitle']}")
             print(self.info)
 
             # Subsubfolder for chosen channel
-            self.interim_path, self.processed_path, self.reports_path = generateSubfolders()
+            (
+                self.interim_path,
+                self.processed_path,
+                self.reports_path,
+            ) = generateSubfolders()
             self.channel_path = self.interim_path.joinpath(self.info["channel_foldername"])
             self.channel_path.mkdir(exist_ok=True, parents=True)
-            
+
             channel_info_file = self.channel_path.joinpath("channel_info")
-            with open(channel_info_file, 'w') as file:
+            with open(channel_info_file, "w") as file:
                 json.dump(info, file)
-            
+
             print()
             print(f"Stored channel info stored in {channel_info_file}")
             print()
@@ -141,7 +144,7 @@ class ytChannel:
         print(f'{len(raw_video_info)} videos found for {video["videoOwnerChannelTitle"]}')
         print()
 
-    def getAndSaveVideoStatistics(self, check_existing_videos: bool):
+    def getAndSaveVideoStatistics(self, update_videos: bool):
         """
         Augments additional video metrics and save as .csv file.
 
@@ -152,7 +155,7 @@ class ytChannel:
                         No returns. video metrics are stored in /{channel_path}/all_videos.csv
         """
 
-        if check_existing_videos:
+        if update_videos:
             try:
                 # Import videoIds back from local storage
                 all_videos = pd.read_csv(
@@ -167,12 +170,12 @@ class ytChannel:
                 print(f"Most recent video fetched from {all_videos['publishedAt'].max()}")
                 print("Set check_existing_videos=False to fetch fresh API data")
                 return
-            
+
             except FileNotFoundError as e:
                 print("No existing file 'all_videos.csv' found.")
                 return
 
-        # Instantiate youtube instance with given api_key_selector
+        # Instantiate youtube instance
         youtube = setupYouTube()
 
         # Data frame filled in loop below
@@ -194,9 +197,7 @@ class ytChannel:
         d = 0
 
         for counter, videoId in enumerate(self.raw_video_info["videoId"]):
-            video_request = youtube.videos().list(
-                part="snippet, contentDetails, statistics", id=videoId
-            )
+            video_request = youtube.videos().list(part="snippet, contentDetails, statistics", id=videoId)
 
             video_response = video_request.execute()
 
@@ -221,9 +222,7 @@ class ytChannel:
 
         # Concat original dataframe with requested metrics. Save dataframe as .csv
         all_videos = pd.merge(left=self.raw_video_info, right=all_metrics, on="videoId")
-        all_videos.set_index("videoId").to_csv(
-            self.channel_path.joinpath("all_videos.csv"), lineterminator="\r"
-        )
+        all_videos.set_index("videoId").to_csv(self.channel_path.joinpath("all_videos.csv"), lineterminator="\r")
         self.dateOfVideoFetch = datetime.now().date().today()
         print(f"Generated 'all_videos.csv' in {self.channel_path}")
 
@@ -235,7 +234,7 @@ class ytChannel:
         If fetch incomplete, "missing_videos.json" is stored locally and method runs again.
 
         """
-        
+
         # If final file already exists, do nothing, otherwise start OR continue comment fetch.
         if check_existing_comments:
             if ("all_comments_noSentiment.csv" in os.listdir(self.channel_path)) or (
@@ -243,7 +242,7 @@ class ytChannel:
             ):
                 return f"Comment fetch appears finished. csv file found in {self.channel_path}. \
                         Set check_existing_comments=False for a fresh comments fetch."
-        
+
         print("Getting channel comments ... ")
         if not "missing_videos.json" in os.listdir(self.channel_path):
             all_videos = pd.read_csv(
@@ -254,7 +253,8 @@ class ytChannel:
 
             videoIds = list(
                 all_videos.query("commentCount.notnull()")  # NULL when comments are disabled
-                .query("commentCount != 0").index  # 0 comments written (includes also Livestreams)
+                .query("commentCount != 0")
+                .index  # 0 comments written (includes also Livestreams)
             )
 
         else:
@@ -264,7 +264,7 @@ class ytChannel:
             print("Continuing with missing_videos.json")
 
         columns_comments = [
-            'videoId',
+            "videoId",
             "comment_id",
             "comment_author",
             "comment_likes",
@@ -302,22 +302,12 @@ class ytChannel:
                         item_snippet = item["snippet"]
                         comments["videoId"] = item_snippet["videoId"]
                         comments["comment_id"] = item_snippet["topLevelComment"]["id"]
-                        comments["comment_author"] = item_snippet["topLevelComment"][
-                            "snippet"
-                        ]["authorDisplayName"]
-                        comments["comment_likes"] = item_snippet["topLevelComment"][
-                            "snippet"
-                        ]["likeCount"]
+                        comments["comment_author"] = item_snippet["topLevelComment"]["snippet"]["authorDisplayName"]
+                        comments["comment_likes"] = item_snippet["topLevelComment"]["snippet"]["likeCount"]
                         comments["comment_replies"] = item_snippet["totalReplyCount"]
-                        comments["comment_published"] = item_snippet["topLevelComment"][
-                            "snippet"
-                        ]["publishedAt"]
-                        comments["comment_update"] = item_snippet["topLevelComment"][
-                            "snippet"
-                        ]["updatedAt"]
-                        comments["comment_string"] = item_snippet["topLevelComment"][
-                            "snippet"
-                        ]["textDisplay"]
+                        comments["comment_published"] = item_snippet["topLevelComment"]["snippet"]["publishedAt"]
+                        comments["comment_update"] = item_snippet["topLevelComment"]["snippet"]["updatedAt"]
+                        comments["comment_string"] = item_snippet["topLevelComment"]["snippet"]["textDisplay"]
                         comments["reply_id"] = "None"
                         comments["top_level_comment"] = True
 
@@ -330,21 +320,12 @@ class ytChannel:
                                 replies = dict()
                                 replies["videoId"] = reply["snippet"]["videoId"]
                                 replies["comment_id"] = reply["snippet"]["parentId"]
-                                replies["comment_author"] = reply["snippet"][
-                                    "authorDisplayName"
-                                
-            ]
+                                replies["comment_author"] = reply["snippet"]["authorDisplayName"]
                                 replies["comment_likes"] = reply["snippet"]["likeCount"]
                                 replies["comment_replies"] = "NaN"  #
-                                replies["comment_published"] = reply["snippet"][
-                                    "publishedAt"
-                                ]
-                                replies["comment_update"] = reply["snippet"][
-                                    "updatedAt"
-                                ]
-                                replies["comment_string"] = reply["snippet"][
-                                    "textDisplay"
-                                ]
+                                replies["comment_published"] = reply["snippet"]["publishedAt"]
+                                replies["comment_update"] = reply["snippet"]["updatedAt"]
+                                replies["comment_string"] = reply["snippet"]["textDisplay"]
                                 replies["reply_id"] = reply["id"]  # parentId.replyId
                                 replies["top_level_comment"] = False
 
@@ -384,7 +365,7 @@ class ytChannel:
             with open(self.channel_path.joinpath("missing_videos.json"), "w") as filepath:
                 json.dump(missing_videos, filepath)
 
-            self.getComments() # start method again
+            self.getComments()  # start method again
 
         # If no missing videos (fetch complete), remove missing_videos.json
         else:
@@ -394,14 +375,13 @@ class ytChannel:
             print()
 
     def concatAndSaveComments(self):
-        
         if "tmp" not in os.listdir(self.channel_path):
             return "No tmp subfolder found. Nothing to concatenate."
 
         print("Concatenating .csv files from tmp subfolder")
         all_comments = pd.DataFrame()
         video_files = os.listdir(self.channel_path.joinpath("tmp"))
-        
+
         for counter, file in enumerate(video_files):
             _ = pd.read_csv(
                 self.channel_path.joinpath("tmp", file),
@@ -422,9 +402,7 @@ class ytChannel:
             lineterminator="\r",
         )
         video_features = all_videos[["Title", "videoOwnerChannelTitle", "publishedAt"]]
-        all_comments = pd.merge(
-            left=all_comments, right=video_features, how="left", on="videoId"
-        )
+        all_comments = pd.merge(left=all_comments, right=video_features, how="left", on="videoId")
 
         # Drop unnecessary columns
         all_comments = all_comments.drop(["comment_update"], axis=1)
@@ -473,15 +451,14 @@ class ytChannel:
 
         print("loading model ...")
         from germansentiment import SentimentModel
+
         sentiment = SentimentModel()
 
         # Loop for sentiment analysis
         n_comments = len(comments_for_sentiment)  # required for loop reporting
         sentiment_estimate = ()
         sentimentsDF = pd.DataFrame()  # sentiments go here
-        print(
-            f"Analyzing sentiment for {n_comments} comments fetched from {self.info['channelTitle']} ..."
-        )
+        print(f"Analyzing sentiment for {n_comments} comments fetched from {self.info['channelTitle']} ...")
         start = time.time()
 
         for comment in comments_for_sentiment["comment_string"]:
@@ -506,9 +483,7 @@ class ytChannel:
                 start = time.time()
 
         # Augment sentiment to original data frame and store as csv
-        comments_for_sentiment = pd.merge(
-            comments_for_sentiment, sentimentsDF, left_index=True, right_index=True
-        )
+        comments_for_sentiment = pd.merge(comments_for_sentiment, sentimentsDF, left_index=True, right_index=True)
         comments_for_sentiment.to_csv(
             self.channel_path.joinpath("all_comments_withSentiment.csv"),
             lineterminator="\r",
@@ -519,6 +494,7 @@ class ytChannel:
             file = self.channel_path.joinpath("all_comments_noSentiment.csv")
             os.remove(file)
             print("original csv deleted.")
+
 
 # =============================================================================
 # Outsourced functions - No API requests involved below
@@ -546,12 +522,12 @@ def concatCommentsAndVideos(channel_paths):
     for channel_path in channel_paths:
         try:
             # Import all channels
-            with open(channel_path.joinpath("channel_info"), 'r') as file:
+            with open(channel_path.joinpath("channel_info"), "r") as file:
                 data = json.load(file)
-            
+
             channel = pd.DataFrame.from_dict([data])
             channels = pd.concat([channels, channel], axis=0)
-            
+
             # Import all_videos
             videos_per_channel = pd.read_csv(
                 channel_path.joinpath("all_videos.csv"),
@@ -561,7 +537,7 @@ def concatCommentsAndVideos(channel_paths):
             )
 
             videos = pd.concat([videos, videos_per_channel], axis=0)
-            
+
             # Import all_comments...
             comments_per_channel = pd.read_csv(
                 channel_path.joinpath("all_comments_withSentiment.csv"),
@@ -595,14 +571,22 @@ def findZDFurl(string):
         return False  # no url at all
     else:
         if str(url).find("zdf") != -1:
-            if (
-                str(url).find("service") != -1
-            ):  # zdf url but reference to service site (netiquette)
+            if str(url).find("service") != -1:  # zdf url but reference to service site (netiquette)
                 return False
             else:
                 return True  # zdf url
         else:
             return False  # url but not ZDF
+
+
+def determine_gender(author, male_names, female_names):
+    author_firstname = author.split()[0].lower()
+    if author_firstname in male_names and author_firstname not in female_names:
+        return "male"
+    elif author_firstname not in male_names and author_firstname in female_names:
+        return "female"
+    else:
+        return "undefined"
 
 
 # =============================================================================
