@@ -15,7 +15,7 @@ print(channels)
 # Check quota limit here: # https://console.cloud.google.com/apis
 # =============================================================================
 
-# Single channel 
+# Single channel
 oChannel = ytChannel("UCjCbe-qZ4SW10SkXdPm7hPQ")
 oChannel.getVideoIds()
 oChannel.getAndSaveVideoStatistics(False)
@@ -23,7 +23,10 @@ oChannel.getComments(False)
 oChannel.concatAndSaveComments()
 oChannel.applyGermanSentibert()
 
-combineChannels()
+os.system("python transform.py")
+os.system("python report.py")
+os.system("python wordclouds.py")
+
 # Loop through all channels
 # channelIds = channels["channelId"]
 
