@@ -19,10 +19,10 @@ youtubeComments/
         ...                    
     src/
         __init__.py
-        funcs.py       <-- contains various api requests, data transformations, relabelling dictionary, etc.
+        funcs.py 
+        api.py      
         ...
     fetch.py
-    sentiment_analysis.py
     transform.py
     report.py
     ...
@@ -37,14 +37,8 @@ pip install -r requirements.txt
 ```
 
 # Workflow fetching and analyzing comments 
-Execute files in the following order (further instructions and info can be found within these files). 
-1) fetch.py
-2) sentiment_analysis.py
-3) transform.py
-4) report.py (optional)
-5) wordclouds.py (optional)
+Exemplary workflow demonstrated in fetch.py 
 
-When executing fetch.py, data/ folder is genrated. Here, storage of various csv files containing channel, video and comment information 
 
 ```
 youtubeComments/       
