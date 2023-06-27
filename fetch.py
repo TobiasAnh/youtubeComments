@@ -2,7 +2,7 @@
 import os
 import pandas as pd
 from pathlib import Path
-from src.funcs import ytChannel
+from src.api import ytChannel
 
 # =============================================================================
 # Channel Ids overview
@@ -15,25 +15,21 @@ print(channels)
 # Check quota limit here: # https://console.cloud.google.com/apis
 # =============================================================================
 
-# Single channel
-oChannel = ytChannel("UCjCbe-qZ4SW10SkXdPm7hPQ")
-oChannel.getVideoIds()
-oChannel.getAndSaveVideoStatistics(False)
-oChannel.getComments(False)
+# Single channel (api data fetch)
+oChannel = ytChannel("UCWKEY-aEu7gcv5ayIpgrnvg")
+oChannel.fetchVideoIds()
+oChannel.fetchAndStoreVideoStatistics(load_existing=False)
+oChannel.fetchComments(load_existing=False)
+
+# Data concatination and estimation of addtional metrics
 oChannel.concatAndSaveComments()
 oChannel.applyGermanSentibert()
 
+# Combines data from every channel found in /interim
+# When combined, new comment metrics are estimated
+# In the end, three tables are stored (as csv): channels, videos and comments
 os.system("python transform.py")
+
+# Reporting (reporting uses the tables created above)
 os.system("python report.py")
 os.system("python wordclouds.py")
-
-# Loop through all channels
-# channelIds = channels["channelId"]
-
-# for channelId in channelIds:
-#     channel = ytChannel(channelId)
-#     channel.getVideoIds()
-#     channel.getAndSaveVideoStatistics(False)
-#     channel.getComments(False)
-#     channel.concatAndSaveComments()
-#     channel.applyGermanSentibert()
