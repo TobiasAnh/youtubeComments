@@ -3,8 +3,8 @@ import numpy as np
 
 # import ydata_profiling
 import plotly.express as px
-from src.funcs import generateSubfolders
-from src.funcs import relabeling_dict, px_select_deselect
+from src.funcs import generateSubfolders, subcategorizeChannel
+from src.funcs import unbubble_mapping, relabeling_dict, px_select_deselect
 from src.funcs import importDFdtypes
 
 # =============================================================================
@@ -12,8 +12,6 @@ from src.funcs import importDFdtypes
 # =============================================================================
 
 interim_path, processed_path, reports_path = generateSubfolders()
-
-
 channels = pd.read_csv(processed_path.joinpath("channels.csv"), lineterminator="\r", index_col=0)
 
 # Import csv and assign correct dtypes (both videos and comments)
@@ -26,8 +24,8 @@ comments = comments.astype(importDFdtypes(processed_path, "comments.json"))
 
 # Only videos published before report_deadline are included in report.
 # (to avoid including videos with insufficient time to accumulate comments
-report_deadline = "2023-04-01 00:00:00+00:00"
-report_deadline_short = "Q1 2023"
+report_deadline = "2023-06-20 00:00:00+00:00"
+report_deadline_short = "20. Jun 2023"
 
 # =============================================================================
 # Video Filter:
@@ -77,13 +75,22 @@ features = [
     "toplevel_neutrality",
     "ZDF_content_references",
 ]
+## NOTE Testing
+videos_cutoff = videos_cutoff.query("available_comments >= 50").query("videoOwnerChannelTitle == 'unbubble'")
+# Apply the categorize_text function to create the Category column
+videos_cutoff["channel_subdivision"] = videos_cutoff["Title"].apply(lambda x: subcategorizeChannel(x, unbubble_mapping))
+
+# Testing end
+
 
 for feature in features:
     distributions_allVideos = px.strip(
-        videos_cutoff.query("available_comments >= 50"),
+        videos_cutoff.query("available_comments >= 50"),  # default
         x=feature,
-        y="videoOwnerChannelTitle",
-        color="videoOwnerChannelTitle",
+        # y="videoOwnerChannelTitle", # default
+        # color="videoOwnerChannelTitle", # default
+        y="channel_subdivision",
+        color="channel_subdivision",
         hover_data=[
             "publishedAt",
             "Title",
@@ -290,8 +297,59 @@ for feature in features:
 
 
 # TODO: Testing new metrics
+# difference between male and female
+# Comments per author
+len(comments) / len(comments["comment_author"].unique())
+unique_authors = comments[["comment_author", "author_gender"]].reset_index(drop=True).drop_duplicates()
+unique_authors.groupby("author_gender").size()
+
+unique_authors.query("author_gender != 'undefined'")
+
+channel_gendered = (
+    comments.groupby(["videoOwnerChannelTitle", "author_gender"], as_index=False)
+    .size()
+    .pivot(index="videoOwnerChannelTitle", columns="author_gender")
+)
+
+channel_gendered.columns = ["female", "male", "undefined"]
+channel_gendered["female_perc"] = channel_gendered["female"] / (channel_gendered["female"] + channel_gendered["male"])
+channel_gendered.sort_values("female_perc")
+fig = px.bar(
+    channel_gendered,
+    y=["female", "male", "undefined"],
+)
+fig.write_html(reports_path.joinpath(f"author_gender.html"))
+
+gender_metrics = {
+    "author_gender": "size",
+    "comment_word_count": "mean",
+    "prediction_num": "mean",
+    "response_time_sec": "median",
+    "comment_replies": "mean",
+    "comment_likes": "mean",
+    "top_level_comment": "mean",
+}
+
+comments_gendered = comments_gendered_perChannel = (
+    comments.query("author_gender != 'undefined'").groupby("author_gender").agg(gender_metrics)
+)
+comments_gendered_perChannel.to_excel(
+    reports_path.joinpath("comments_gendered.xlsx"), sheet_name="overall", index_label=True
+)
+
+comments_gendered_perChannel = (
+    comments.query("author_gender != 'undefined'")
+    .groupby(["videoOwnerChannelTitle", "author_gender"])
+    .agg(gender_metrics)
+)
+
+comments_gendered_perChannel.to_excel(
+    reports_path.joinpath("comments_gendered_perChannel.xlsx"), sheet_name="perChannel", index_label=True
+)
+
 
 # Percentage of authors active in all other channels
+# Venn diagrams
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn2
 
@@ -323,40 +381,12 @@ for channel in list(channels.channelTitle):
 
     plt.savefig(path.joinpath(f"authors_outside_activity.png"))
 
-
-# Checking sentiment for authors commenting multiple times
-negativity_authors = pd.DataFrame(columns=["n_comments", "mean_negativity", "sd", "videoOwnerChannelTitle"])
-for channel in list(channels.channelTitle):
-    df = (
-        comments.query("owner_comment == False")
-        .query("videoOwnerChannelTitle == @channel")
-        .groupby("comment_author")
-        .agg(
-            n_comments=("comment_author", "size"),
-            mean_negativity=("negative", "mean"),
-            sd=("negative", "std"),
-        )
-        .sort_values("mean_negativity", ascending=True)
-        .query("n_comments > 4")
-        .reset_index()
-    )
-    df["videoOwnerChannelTitle"] = channel
-
-    negativity_authors = pd.concat([negativity_authors, df])
-
-distributions_authors = px.strip(
-    negativity_authors,
-    x="mean_negativity",
-    y="videoOwnerChannelTitle",
-    color="videoOwnerChannelTitle",
-    template="simple_white",
-    hover_data=["comment_author", "n_comments"],
-    # opacity = 0.5,
-    title=f"ZDF YouTube-Kommentator*innen | {info_of_used_filter}",
-    labels=relabeling_dict,
+n_authors = comments["comment_author"].unique()
+len(n_authors)
+test_df = (
+    comments.groupby(["comment_author", "videoOwnerChannelTitle"], as_index=False).size().sort_values("comment_author")
 )
+test_df2 = test_df.pivot(index="comment_author", columns="videoOwnerChannelTitle")
+len(test_df2)
 
-distributions_authors.write_html(reports_path.joinpath(f"Verteilung_sentiment_per_author.html"))
-# Checking comments likes versus
-fig = px.scatter(comments, x="comment_likes", y="negative", color="videoOwnerChannelTitle")
-fig.show()
+comments.groupby("videoOwnerChannelTitle").size()
