@@ -4,7 +4,7 @@ import pandas as pd
 import os
 from pathlib import Path
 from src.funcs import generateSubfolders
-from src.funcs import concatCommentsAndVideos, exportDFdtypes
+from src.funcs import concatChannelData, exportDFdtypes
 from src.funcs import findZDFurl, determine_gender
 
 # =============================================================================
@@ -14,7 +14,11 @@ interim_path, processed_path, reports_path = generateSubfolders()
 
 channel_paths = [x for x in interim_path.iterdir() if x.is_dir()]
 print(f"found {len(channel_paths)} folders / channels.")
-channels, comments, videos = concatCommentsAndVideos(channel_paths)
+channels, comments, videos = concatChannelData(channel_paths)
+
+print()
+print("Starting metric estimation ...")
+print()
 
 # Assign / create features
 comments["owner_comment"] = comments["comment_author"] == comments["videoOwnerChannelTitle"]
@@ -181,8 +185,18 @@ female_names = pd.read_csv(Path(os.getcwd()).joinpath("references", "females.csv
 female_names = [x.lower() for x in female_names]
 
 comments["author_gender"] = comments["comment_author"].apply(lambda x: determine_gender(x, male_names, female_names))
-comments.groupby("author_gender").size()
-comments[{"comment_author", "author_gender"}]
+comments_gendered = (
+    comments.groupby(["videoId", "author_gender"], as_index=False)
+    .size()
+    .pivot(index="videoId", columns="author_gender")
+)
+comments_gendered.columns = ["female", "male", "undefined"]
+comments_gendered["gender_identified"] = (
+    comments_gendered["female"] + comments_gendered["male"]
+) / comments_gendered.sum(axis=1)
+videos = videos.join(comments_gendered["gender_identified"])
+
+
 # =============================================================================
 # Add video url
 # =============================================================================
@@ -236,6 +250,7 @@ agg_dict = {
     "toplevel_sentiment_mean": "mean",  # Note: simple average here, no weights
     "ratio_RepliesToplevel": "mean",
     "ZDF_content_references": "sum",
+    "gender_identified": "mean",
 }
 channels_metrics = videos.groupby("videoOwnerChannelId").agg(agg_dict)
 
@@ -251,6 +266,8 @@ channels = channels.rename(columns={"video_url": "n_videos"})
 # Exports
 # DataFrames to csv, dtypes to json
 # =============================================================================
+
+print("Metric estimation complete, starting DataFrame storage as .csv")
 
 # Channels
 channels.to_csv(processed_path.joinpath("channels.csv"), lineterminator="\r")
