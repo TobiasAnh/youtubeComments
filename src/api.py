@@ -392,12 +392,12 @@ class ytChannel:
             with open(self.channel_path.joinpath("missing_videos.json"), "w") as filepath:
                 json.dump(missing_videos, filepath)
 
-            self.getComments()  # start method again
+            self.fetchComments(False)  # start method again
 
         # If no missing videos (fetch complete), remove missing_videos.json
         else:
             if "missing_videos.json" in os.listdir(self.channel_path):
-                os.remove("missing_videos.json")
+                os.remove(self.channel_path.joinpath("missing_videos.json"))
             print("Comments of all videos fetched :)")
             print()
 

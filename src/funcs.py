@@ -112,7 +112,7 @@ def findZDFurl(string):
             return False  # url but not ZDF
 
 
-def determine_gender(author, male_names, female_names):
+def determineGender(author, male_names, female_names):
     try:
         author = str(author)
         author_firstname = author.split()[0].lower()
@@ -124,6 +124,7 @@ def determine_gender(author, male_names, female_names):
             return "male"
         elif author_firstname not in male_names and author_firstname in female_names:
             return "female"
+
         # check if most informative features applies
         # https://www.geeksforgeeks.org/python-gender-identification-by-name-using-nltk/
         elif re.search(r"a$", author_firstname):
@@ -139,19 +140,21 @@ def determine_gender(author, male_names, female_names):
 
 
 #
-def subcategorizeChannel(text, category_mappings):
-    for pattern in category_mappings.keys():
-        if re.search(re.escape(pattern), text):
-            return category_mappings[pattern]
-    return "Other"
 
 
-# used in subcategorizeChannel()
+# usable in subcategorizeChannel()
 unbubble_mapping = {
     "13 Fragen": "13 Fragen",
     "s mir": "Sags mir",
     "Unter Anderen": "Unter Anderen",
 }
+
+
+def subcategorizeChannel(text, category_mappings):
+    for pattern in category_mappings.keys():
+        if re.search(re.escape(pattern), text):
+            return category_mappings[pattern]
+    return "Other"
 
 
 # =============================================================================
@@ -224,7 +227,8 @@ relabeling_dict = {
     "ZDF_content_references": "ZDFmediatheks Verweise",
     "references_per_video": "ZDFmediatheks Verweise pro Video",
     "toplevel_neutrality": "Neutralität",
-    "gender_identified": "Anteil Autor*innen mit bekanntem Geschlecht",
+    "n_gender_identified": "Anteil Autor*innen mit bekanntem Geschlecht",
+    "female_percentage": "Frauenanteil",
 }
 
 
