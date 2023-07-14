@@ -168,9 +168,10 @@ videos["comments_per_1kViews"] = videos["comments_per_1kViews"].replace([np.inf]
 
 # =============================================================================
 # Feature engineering (video)
-# Comments per author
+# Author related metrics
 # =============================================================================
 
+# comments per author
 _ = user_comments.groupby(["videoId", "comment_author"]).size().reset_index()
 _ = _.rename(columns={0: "comments_per_author"}).sort_values(["videoId", "comments_per_author"], ascending=False)
 
@@ -191,12 +192,16 @@ comments_gendered = (
     .pivot(index="videoId", columns="author_gender")
 )
 comments_gendered.columns = ["female", "male", "undefined"]
-comments_gendered["gender_identified"] = (
-    comments_gendered["female"] + comments_gendered["male"]
-) / comments_gendered.sum(axis=1)
-videos = videos.join(comments_gendered["gender_identified"])
+comments_gendered["n_gender_identified"] = comments_gendered["female"] + comments_gendered["male"]
+comments_gendered["female_percentage"] = comments_gendered["female"] / (
+    (comments_gendered["female"] + comments_gendered["male"])
+)
 
+videos = videos.join(comments_gendered[["female_percentage", "n_gender_identified", "female", "male"]])
 
+# TODO Firsttimers
+df = comments.groupby(["comment_author", "videoId", "comment_published"]).size().reset_index()
+df.sort_values(["comment_author", "videoId", "comment_published"])
 # =============================================================================
 # Add video url
 # =============================================================================
@@ -250,7 +255,7 @@ agg_dict = {
     "toplevel_sentiment_mean": "mean",  # Note: simple average here, no weights
     "ratio_RepliesToplevel": "mean",
     "ZDF_content_references": "sum",
-    "gender_identified": "mean",
+    "n_gender_identified": "mean",
 }
 channels_metrics = videos.groupby("videoOwnerChannelId").agg(agg_dict)
 
