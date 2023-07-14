@@ -24,15 +24,15 @@ comments = comments.astype(importDFdtypes(processed_path, "comments.json"))
 
 # Only videos published before report_deadline are included in report.
 # (to avoid including videos with insufficient time to accumulate comments
-report_deadline = "2023-06-20 00:00:00+00:00"
-report_deadline_short = "20. Jun 2023"
+report_deadline = "2023-03-31 00:00:00+00:00"
+report_deadline_short = "Q1 2023"
 
 # =============================================================================
 # Video Filter:
 # 1) only comments before report_deadline
 # =============================================================================
 
-videos.query("available_comments < 50").groupby("videoOwnerChannelTitle").size().sum()
+
 videos_cutoff = videos.query("publishedAt < @report_deadline")
 info_of_used_filter = f"Videos und Kommentare und bis einschl. {report_deadline_short} ({len(videos_cutoff)} Videos und {len(comments)} Kommentare)"
 
@@ -72,13 +72,13 @@ features = [
     "mean_word_count",
     "comments_per_author",
     "removed_comments_perc",
-    "toplevel_neutrality",
+    "female_percentage",
     "ZDF_content_references",
 ]
 ## NOTE Testing
-videos_cutoff = videos_cutoff.query("available_comments >= 50").query("videoOwnerChannelTitle == 'unbubble'")
-# Apply the categorize_text function to create the Category column
-videos_cutoff["channel_subdivision"] = videos_cutoff["Title"].apply(lambda x: subcategorizeChannel(x, unbubble_mapping))
+# videos_cutoff = videos_cutoff.query("available_comments >= 50").query("videoOwnerChannelTitle == 'unbubble'")
+## Apply the categorize_text function to create the Category column
+# videos_cutoff["channel_subdivision"] = videos_cutoff["Title"].apply(lambda x: subcategorizeChannel(x, unbubble_mapping))
 
 # Testing end
 
@@ -87,10 +87,10 @@ for feature in features:
     distributions_allVideos = px.strip(
         videos_cutoff.query("available_comments >= 50"),  # default
         x=feature,
-        # y="videoOwnerChannelTitle", # default
-        # color="videoOwnerChannelTitle", # default
-        y="channel_subdivision",
-        color="channel_subdivision",
+        y="videoOwnerChannelTitle",  # default
+        color="videoOwnerChannelTitle",  # default
+        # y="channel_subdivision",
+        # color="channel_subdivision",
         hover_data=[
             "publishedAt",
             "Title",
@@ -115,156 +115,144 @@ for feature in features:
 # SPLOM: Scatter Plot Matrix
 # =============================================================================
 
-splom_title = f"Scatterplot Matrix verschiedener YT-Video Eigenschaften | {info_of_used_filter})"
-video_features = [
-    "likes_per_1kViews",
-    # "mod_activity",
-    "ratio_RepliesToplevel",
-    # "responsivity",
-    # "viewCount",
-    "toplevel_sentiment_mean",
-    # "toplevel_neutrality",
-    # "comments_per_author",
-    "removed_comments_perc",
-]
+# splom_title = f"Scatterplot Matrix verschiedener YT-Video Eigenschaften | {info_of_used_filter})"
+# video_features = [
+#     "likes_per_1kViews",
+#     # "mod_activity",
+#     "ratio_RepliesToplevel",
+#     # "responsivity",
+#     # "viewCount",
+#     "toplevel_sentiment_mean",
+#     # "toplevel_neutrality",
+#     # "comments_per_author",
+#     "removed_comments_perc",
+# ]
 
-splom = px.scatter_matrix(
-    videos_cutoff,
-    dimensions=video_features,
-    color="videoOwnerChannelTitle",
-    hover_data=["Title"],
-    template="simple_white",
-    opacity=0.4,
-    title=splom_title,
-    labels=relabeling_dict,
-)
+# splom = px.scatter_matrix(
+#     videos_cutoff,
+#     dimensions=video_features,
+#     color="videoOwnerChannelTitle",
+#     hover_data=["Title"],
+#     template="simple_white",
+#     opacity=0.4,
+#     title=splom_title,
+#     labels=relabeling_dict,
+# )
 
-splom.update_layout(px_select_deselect)
-splom.write_html(reports_path.joinpath("SPLOM.html"))
+# splom.update_layout(px_select_deselect)
+# splom.write_html(reports_path.joinpath("SPLOM.html"))
 
-# Relationship between performance and sentiment-index?
-r_squared_matrix_all = videos_cutoff.corr(numeric_only=True) ** 2
-r_squared_matrix = videos_cutoff[video_features].corr(numeric_only=True) ** 2
-round(r_squared_matrix["likes_per_1kViews"], 2)
+# # Relationship between performance and sentiment-index?
+# r_squared_matrix_all = videos_cutoff.corr(numeric_only=True) ** 2
+# r_squared_matrix = videos_cutoff[video_features].corr(numeric_only=True) ** 2
+# round(r_squared_matrix["likes_per_1kViews"], 2)
 
 # =============================================================================
 # Single SCATTER PLOT
 # sentiment vs. video kpi
 # =============================================================================
-kpi = "viewCount"
-scatter_plot = px.scatter(
-    videos_cutoff,
-    y="toplevel_sentiment_mean",
-    x=kpi,
-    # facet_col = "videoOwnerChannelTitle",
-    # facet_col_wrap=5,
-    # size = "commentCount", # Maybe viewCount here?
-    # size_max = 55,
-    hover_data=["Title", "n_toplevel_user_comments", "viewCount", "duration"],
-    template="simple_white",
-    opacity=0.8,
-    title=f"ZDF YT-Videos | Beliebtheit vs. Sentiment-Index (Kreisgröße = Views; {info_of_used_filter})",
-    labels=relabeling_dict,
-)
+# kpi = "viewCount"
+# scatter_plot = px.scatter(
+#     videos_cutoff,
+#     y="toplevel_sentiment_mean",
+#     x=kpi,
+#     # facet_col = "videoOwnerChannelTitle",
+#     # facet_col_wrap=5,
+#     # size = "commentCount", # Maybe viewCount here?
+#     # size_max = 55,
+#     hover_data=["Title", "n_toplevel_user_comments", "viewCount", "duration"],
+#     template="simple_white",
+#     opacity=0.8,
+#     title=f"ZDF YT-Videos | Beliebtheit vs. Sentiment-Index (Kreisgröße = Views; {info_of_used_filter})",
+#     labels=relabeling_dict,
+# )
 
-scatter_plot.update_layout(px_select_deselect)
-scatter_plot.write_html(reports_path.joinpath("scatter_plot.html"))
+# scatter_plot.update_layout(px_select_deselect)
+# scatter_plot.write_html(reports_path.joinpath("scatter_plot.html"))
 
-sentiment_vs_popularity = videos_cutoff[["videoOwnerChannelTitle", kpi, "toplevel_sentiment_mean"]]
+# sentiment_vs_popularity = videos_cutoff[["videoOwnerChannelTitle", kpi, "toplevel_sentiment_mean"]]
 
-for channel in sentiment_vs_popularity["videoOwnerChannelTitle"].unique():
-    r_matrix = sentiment_vs_popularity[sentiment_vs_popularity["videoOwnerChannelTitle"] == channel].corr(
-        numeric_only=True
-    )
-    r_squared_matrix = round(r_matrix**2, 3)
-    print(channel, r_squared_matrix.iloc[0, 1])
+# for channel in sentiment_vs_popularity["videoOwnerChannelTitle"].unique():
+#     r_matrix = sentiment_vs_popularity[sentiment_vs_popularity["videoOwnerChannelTitle"] == channel].corr(
+#         numeric_only=True
+#     )
+#     r_squared_matrix = round(r_matrix**2, 3)
+#     print(channel, r_squared_matrix.iloc[0, 1])
 
 # =============================================================================
-# Channels quarterly resolution
+# Channels monthly/quarterly resolution
 # =============================================================================
+
+# TODO Adjust to monthly ! now with resample method.
 
 # Generate new path for quarterly reports
-quarter_path = reports_path.joinpath("Quartalszahlen")
-quarter_path.mkdir(exist_ok=True, parents=True)
+trends_path = reports_path.joinpath("trends")
+trends_path.mkdir(exist_ok=True, parents=True)
 
-# Augment quarter (as float .1 = Q1, .2 = Q2, etc.)
-videos_cutoff["quarter"] = videos_cutoff["publishedAt"].dt.year + (videos_cutoff["publishedAt"].dt.quarter / 10)
+# Loop through intervals and aggregate metrics
+# NOTE Choose interval here
+channels_trends = pd.DataFrame()
+frequency = "M"  # choose frequency D, W, M, Q
 
-comments["quarter"] = comments["comment_published"].dt.year + (comments["publishedAt"].dt.quarter / 10).apply(
-    lambda x: round(x, 1)
-)
+agg_dict_video = {
+    "video_url": "size",  # column only used to sum videos (relabeled below)
+    "viewCount": "sum",
+    "likeCount": "sum",
+    "commentCount": "sum",
+    "available_comments": "sum",
+    "removed_comments": "sum",
+    "removed_comments_perc": "mean",
+    "comments_per_author": "mean",
+    "ratio_RepliesToplevel": "mean",
+    "toplevel_neutrality": "mean",
+    "responsivity": "mean",
+    "toplevel_sentiment_mean": "mean",
+    "ZDF_content_references": "sum",
+    "male": "sum",
+    "female": "sum",
+}
 
-# Loop through quarters and aggregate metrics
-quarters = sorted(list(videos_cutoff["quarter"].unique()))
-channels_quarter = pd.DataFrame()
+agg_dict_comments = {
+    "videoId": "size",  # column only used to sum comments (relabeled below)
+    "comment_word_count": "median",
+    "owner_comment": "sum",
+}
 
-for quarter in quarters:
+
+videos_dateIndexed = videos_cutoff.set_index(pd.to_datetime(videos_cutoff["publishedAt"]))
+comments_dateIndexed = comments.set_index("comment_published")
+
+for channel in videos_cutoff["videoOwnerChannelTitle"].unique():
     video_derived_metrics = (
-        videos_cutoff.query("quarter == @quarter")
-        .groupby("videoOwnerChannelTitle")
-        .agg(
-            {
-                "quarter": "median",
-                "video_url": "size",  # column only used to sum videos (relabeled below)
-                "viewCount": "sum",
-                "likeCount": "sum",
-                "commentCount": "sum",
-                "available_comments": "sum",
-                "removed_comments": "sum",
-                "removed_comments_perc": "mean",
-                "comments_per_author": "mean",
-                "ratio_RepliesToplevel": "mean",
-                "toplevel_neutrality": "mean",
-                "responsivity": "mean",
-                "toplevel_sentiment_mean": "mean",
-                "ZDF_content_references": "sum",
-            }
-        )
-    ).reset_index()
+        videos_dateIndexed.query("videoOwnerChannelTitle == @channel").resample(frequency).agg(agg_dict_video)
+    )
 
     comment_derived_metrics = (
-        (
-            comments.query("quarter == @quarter")
-            .groupby("videoOwnerChannelTitle")
-            .agg(
-                {
-                    "videoId": "size",  # column only used to sum comments (relabeled below)
-                    "comment_word_count": "median",
-                    "owner_comment": "sum",
-                }
-            )
-        )
-        .reset_index()
-        .drop("videoOwnerChannelTitle", axis=1)
+        comments_dateIndexed.query("videoOwnerChannelTitle == @channel").resample(frequency).agg(agg_dict_comments)
     )
 
     derived_metrics = pd.concat([video_derived_metrics, comment_derived_metrics], axis=1)
-    channels_quarter = pd.concat([channels_quarter, derived_metrics], axis=0)
+    derived_metrics["videoOwnerChannelTitle"] = channel
 
-    print(f"estimated metrics for {quarter}")
+    channels_trends = pd.concat([channels_trends, derived_metrics], axis=0)
+
+    print(f"estimated metrics for {channel}")
 
 # Clean up dataframe
-channels_quarter["videoCount"] = channels_quarter["video_url"]
-channels_quarter["commentCount"] = channels_quarter["videoId"]
-channels_quarter["mod_activity"] = channels_quarter["owner_comment"] / channels_quarter["available_comments"] * 1000
-channels_quarter["references_per_video"] = channels_quarter["ZDF_content_references"] / channels_quarter["videoCount"]
-channels_quarter = channels_quarter.drop(["video_url", "videoId"], axis=1).reset_index(drop=True)
-channels_quarter["quarter_cat"] = pd.Categorical(channels_quarter["quarter"], categories=quarters, ordered=True)
-channels_quarter["quarter_cat"] = channels_quarter["quarter_cat"].cat.rename_categories(
-    lambda x: str(x).replace(".", " Q")
-)
-channels_quarter = channels_quarter.dropna()
+channels_trends["videoCount"] = channels_trends["video_url"]
+channels_trends["commentCount"] = channels_trends["videoId"]
+channels_trends["mod_activity"] = channels_trends["owner_comment"] / channels_trends["available_comments"] * 1000
+channels_trends["female_percentage"] = channels_trends["female"] / (channels_trends["female"] + channels_trends["male"])
+channels_trends["references_per_video"] = channels_trends["ZDF_content_references"] / channels_trends["videoCount"]
+channels_trends = channels_trends.drop(["video_url", "videoId"], axis=1)
+channels_trends = channels_trends.dropna()
 
 # Export table
-channels_quarter = channels_quarter.sort_values(["videoOwnerChannelTitle", "quarter"]).reset_index(drop=True)
-channels_quarter.rename(columns=relabeling_dict).to_csv(
-    processed_path.joinpath("Quartalszahlen.csv"), lineterminator="\r", index=False
-)
+export_df = channels_trends.sort_values("videoOwnerChannelTitle").reset_index()
+export_df.rename(columns=relabeling_dict).to_csv(trends_path.joinpath("Trend.csv"), lineterminator="\r", index=False)
 
-# Quarterly plots (for each feature a single plot)
-# min_quarter = 2019.1
-# channels_quarter_plot = channels_quarter.query("quarter >= @min_quarter")
-
+# Trend plots (for each feature a single plot)
+# TODO axis labelling is a bit off .. .
 features = [
     "available_comments",
     "toplevel_sentiment_mean",
@@ -272,29 +260,29 @@ features = [
     "mod_activity",
     "removed_comments_perc",
     "references_per_video",
+    "female_percentage",
 ]
 
 for feature in features:
-    quaterly_metrics = px.line(
-        channels_quarter,
-        x="quarter_cat",
+    trends_plot = px.line(
+        channels_trends,
+        x=channels_trends.index,
         y=feature,
-        category_orders={"quarter_cat": channels_quarter["quarter_cat"].cat.categories},
+        # category_orders={"quarter_cat": channels_trends["quarter_cat"].cat.categories},
         color="videoOwnerChannelTitle",
         hover_data=["videoCount"],
         template="simple_white",
         # opacity = 0.8,
         markers=True,
-        title=f"ZDF YT-Videos | {relabeling_dict.get(feature)} (Quartalswerte)",
+        title=f"ZDF YT-Videos | {relabeling_dict.get(feature)}",
         labels=relabeling_dict,
     )
 
-    quaterly_metrics.update_layout(px_select_deselect)
-    quaterly_metrics.update_xaxes(title=None)
-    file_name = f"Quartalsverlauf_{relabeling_dict.get(feature).replace(' ','_')}.html"
+    trends_plot.update_layout(px_select_deselect)
+    trends_plot.update_xaxes(title=None)
+    file_name = f"Trend_{relabeling_dict.get(feature).replace(' ','_')}.html"
     # quaterly_metrics.update_xaxes(type='category')
-    quaterly_metrics.write_html(quarter_path.joinpath(file_name))
-
+    trends_plot.write_html(trends_path.joinpath(file_name))
 
 # TODO: Testing new metrics
 # difference between male and female
@@ -380,13 +368,3 @@ for channel in list(channels.channelTitle):
     path.mkdir(exist_ok=True, parents=True)
 
     plt.savefig(path.joinpath(f"authors_outside_activity.png"))
-
-n_authors = comments["comment_author"].unique()
-len(n_authors)
-test_df = (
-    comments.groupby(["comment_author", "videoOwnerChannelTitle"], as_index=False).size().sort_values("comment_author")
-)
-test_df2 = test_df.pivot(index="comment_author", columns="videoOwnerChannelTitle")
-len(test_df2)
-
-comments.groupby("videoOwnerChannelTitle").size()
